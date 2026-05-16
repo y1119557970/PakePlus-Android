@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>四艺堂管理系统 - 授权密钥生成器</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Microsoft YaHei', Arial, sans-serif;
+    }
+    body {
+      background: linear-gradient(135deg, #f0f4ff, #e8f4f8);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 50px auto;
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .header .logo {
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(135deg, #4e6ef2, #2dd4bf);
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      color: white;
+    }
+    .header h1 {
+      color: #1f2937;
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+    .header p {
+      color: #6b7280;
+      font-size: 14px;
+    }
+    .form-group {
+      margin-bottom: 25px;
+    }
+    .form-group label {
+      display: block;
+      color: #374151;
+      font-size: 15px;
+      margin-bottom: 10px;
+      font-weight: 500;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 14px 18px;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      font-size: 15px;
+      outline: none;
+      transition: all 0.3s;
+      background: #f9fafb;
+    }
+    .form-group input:focus {
+      border-color: #4e6ef2;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(78, 110, 242, 0.1);
+    }
+    .btn-generate {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #4e6ef2, #2dd4bf);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-bottom: 30px;
+    }
+    .btn-generate:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+    }
+    .result-card {
+      background: #f9fafb;
+      border-radius: 16px;
+      padding: 25px;
+      margin-top: 20px;
+      border: 1px solid #e5e7eb;
+      display: none;
+    }
+    .result-card.show {
+      display: block;
+    }
+    .result-card h3 {
+      color: #1f2937;
+      font-size: 18px;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .result-card h3 span {
+      color: #4e6ef2;
+      font-size: 20px;
+    }
+    .key-display {
+      position: relative;
+      background: #e5e7eb;
+      border-radius: 10px;
+      padding: 15px;
+      margin: 15px 0;
+      word-break: break-all;
+      font-size: 14px;
+      color: #1f2937;
+    }
+    .btn-copy {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #4e6ef2;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 10px 0;
+      font-size: 14px;
+      color: #4b5563;
+    }
+    .info-row span:first-child {
+      color: #6b7280;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      color: #9ca3af;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 头部 -->
+    <div class="header">
+      <div class="logo">🔑</div>
+      <h1>授权密钥生成器</h1>
+      <p>四艺堂管理系统 - 开发者专用</p>
+    </div>
+
+    <!-- 表单 -->
+    <div class="form-group">
+      <label for="machineCode">用户设备机器码</label>
+      <input type="text" id="machineCode" placeholder="粘贴用户提供的机器码（包含末尾==）">
+    </div>
+
+    <div class="form-group">
+      <label for="days">授权有效期（天数）</label>
+      <input type="number" id="days" value="365" min="1" placeholder="例如：365 表示授权1年">
+    </div>
+
+    <button class="btn-generate" onclick="generateKey()">生成授权密钥</button>
+
+    <!-- 结果展示 -->
+    <div class="result-card" id="resultCard">
+      <h3><span>✅</span> 密钥生成成功</h3>
+      <div class="key-display" id="keyDisplay">
+        <!-- 生成的密钥会显示在这里 -->
+        <button class="btn-copy" onclick="copyKey()">复制密钥</button>
+      </div>
+      <div class="info-row">
+        <span>授权天数：</span>
+        <span id="daysInfo">365天</span>
+      </div>
+      <div class="info-row">
+        <span>有效期至：</span>
+        <span id="expireInfo">2027-03-21 22:00:00</span>
+      </div>
+    </div>
+
+    <!-- 底部 -->
+    <div class="footer">
+      © 2026 四艺堂管理系统 - 授权密钥生成工具
+    </div>
+  </div>
+
+  <script>
+    // 与应用端保持一致的密钥
+    const SECRET_KEY = 'y1119557970s17628196973c19980215';
+
+    // 加密函数（与应用端一致）
+    const Crypto = {
+      encrypt: function (text) {
+        let encrypted = '';
+        for (let i = 0; i < text.length; i++) {
+          encrypted += String.fromCharCode(text.charCodeAt(i) + SECRET_KEY.charCodeAt(i % SECRET_KEY.length));
+        }
+        return btoa(encrypted);
+      }
+    };
+
+    // 生成密钥
+    function generateKey() {
+      const machineCode = document.getElementById('machineCode').value.trim();
+      const days = parseInt(document.getElementById('days').value);
+      const resultCard = document.getElementById('resultCard');
+      const keyDisplay = document.getElementById('keyDisplay');
+      const daysInfo = document.getElementById('daysInfo');
+      const expireInfo = document.getElementById('expireInfo');
+
+      // 验证输入
+      if (!machineCode) {
+        alert('请输入用户的机器码！');
+        document.getElementById('machineCode').focus();
+        return;
+      }
+
+      if (isNaN(days) || days <= 0) {
+        alert('授权天数必须是大于0的数字！');
+        document.getElementById('days').focus();
+        return;
+      }
+
+      // 计算过期时间
+      const now = Date.now();
+      const expireTime = now + days * 24 * 60 * 60 * 1000;
+      const expireDate = new Date(expireTime).toLocaleString('zh-CN');
+
+      // 生成密钥
+      const plainText = `${machineCode}|${expireTime}`;
+      const licenseKey = Crypto.encrypt(plainText);
+
+      // 显示结果
+      keyDisplay.innerHTML = `${licenseKey}<button class="btn-copy" onclick="copyKey()">复制密钥</button>`;
+      daysInfo.textContent = `${days}天`;
+      expireInfo.textContent = expireDate;
+      resultCard.classList.add('show');
+
+      // 滚动到结果区域
+      resultCard.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // 复制密钥
+    function copyKey() {
+      const keyDisplay = document.getElementById('keyDisplay');
+      const keyText = keyDisplay.textContent.replace('复制密钥', '').trim();
+      
+      navigator.clipboard.writeText(keyText).then(() => {
+        alert('授权密钥已复制到剪贴板！');
+      }).catch(() => {
+        // 降级方案
+        const tempInput = document.createElement('input');
+        tempInput.value = keyText;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand('copy');
+        document.body.removeChild(tempInput);
+        alert('授权密钥已复制到剪贴板！');
+      });
+    }
+  </script>
+</body>
+</html>

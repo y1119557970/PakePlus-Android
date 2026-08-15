@@ -202,9 +202,9 @@ tailwind.config = {
   .dark .tbl-caption { color: #9ca3af; }
   /* Page */
   .page { display: none; }
-  /* 页面顶部间距：基础间距 + 状态栏安全区（刘海屏适配） */
-  section.page { padding-top: calc(1.5rem + var(--safe-top, 0px)) !important; }
-  #page-home, #page-mock-result { padding-top: calc(2.5rem + var(--safe-top, 0px)) !important; }
+  /* 页面顶部间距：基础间距 + 2px（状态栏适配） */
+  section.page { padding-top: calc(1.5rem + 2px) !important; }
+  #page-home, #page-mock-result { padding-top: calc(2.5rem + 2px) !important; }
   .page.active { display: block; }
   /* 页面切换动画：离开淡出上移，进入淡入上浮 */
   .page.page-enter { animation: pageIn 0.34s cubic-bezier(0.22,0.61,0.36,1) both; }
@@ -25157,12 +25157,16 @@ function _closeSheetConfirm(confirmed){
 }
 
 let _pageTimer = null;
+let _navIsBack = false;
 function _applyPageSwitch(pageId){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active','page-leave'));
   const target = document.getElementById(pageId);
   target.classList.add('active');
-  target.classList.remove('page-enter'); void target.offsetWidth; target.classList.add('page-enter');
-  window.scrollTo(0,0);
+  // 返回手势回退：跳过入场动画与题型页重绘，避免页面跳动闪一下
+  if(!_navIsBack){
+    target.classList.remove('page-enter'); void target.offsetWidth; target.classList.add('page-enter');
+    window.scrollTo(0,0);
+  }
   // 底部导航栏只在主标签页显示，答题页及子页面（题型刷题、模考结果等）隐藏
   const _navVisiblePages = ['page-home','page-level','page-mistakes','page-stats'];
   const _nav = document.getElementById('bottomNav');
@@ -25178,7 +25182,7 @@ function _applyPageSwitch(pageId){
   if(pageId==='page-stats') renderStats();
   if(pageId==='page-mistakes') renderMistakes();
   if(pageId==='page-level') renderLevelPage();
-  if(pageId==='page-type') renderTypePage();
+  if(pageId==='page-type' && !_navIsBack) renderTypePage();
 }
 function showPage(pageId){
   const target = document.getElementById(pageId);
@@ -25195,6 +25199,8 @@ function showPage(pageId){
   }
   const current = document.querySelector('.page.active');
   if(!current){ _applyPageSwitch(pageId); return; }
+  // 返回手势回退：立即切换，不播离场动画
+  if(_navIsBack){ _applyPageSwitch(pageId); return; }
   current.classList.remove('page-enter');
   current.classList.add('page-leave');
   _pageTimer = setTimeout(()=>{
@@ -25213,6 +25219,10 @@ function _navPush(pageId){
   if(_navStack[_navStack.length - 1] === pageId) return;
   _navStack.push(pageId);
   try{ history.pushState({nav: pageId}, ''); }catch(e){}
+}
+// 补回被返回手势消耗的历史记录（弹窗拦截/答题中拦截场景）
+function _navRepush(){
+  try{ history.pushState({nav: _navStack[_navStack.length - 1]}, ''); }catch(e){}
 }
 // 关闭当前打开的最上层弹窗，返回 true 表示有关闭动作
 function _hideTopOverlay(){
@@ -25239,11 +25249,19 @@ function _hideTopOverlay(){
 window.addEventListener('popstate', ()=>{
   // 有弹窗打开时，返回先关弹窗，不切页面
   if(_hideTopOverlay()){
-    try{ history.pushState({nav: _navStack[_navStack.length - 1]}, ''); }catch(e){}
+    _navRepush();
+    return;
+  }
+  // 答题/模考进行中：返回唤起退出确认弹窗（继续答题/确认退出）
+  const _act = document.querySelector('.page.active');
+  if(_act && _act.id === 'page-quiz' && _quizLive){
+    confirmExitQuiz();
+    _navRepush();
     return;
   }
   if(_navStack.length > 1){
     _navSilent = true;
+    _navIsBack = true;
     let dest = null;
     while(_navStack.length > 1){
       _navStack.pop();
@@ -25254,6 +25272,7 @@ window.addEventListener('popstate', ()=>{
       break;
     }
     if(dest) showPage(dest);
+    _navIsBack = false;
     _navSilent = false;
   }
   // 已在首页：交由浏览器默认行为（退出应用）
@@ -26689,13 +26708,6 @@ function initSafeArea(){
   }
   document.documentElement.style.setProperty('--safe-bottom', safeBottom + 'px');
   document.documentElement.style.setProperty('--safe-bottom-compat', 'calc(env(safe-area-inset-bottom) + ' + safeBottom + 'px)');
-  // 顶部安全区（手机状态栏/刘海）
-  const probeTop = document.createElement('div');
-  probeTop.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:env(safe-area-inset-top);height:constant(safe-area-inset-top);pointer-events:none';
-  document.body.appendChild(probeTop);
-  const safeTop = probeTop.offsetHeight;
-  probeTop.remove();
-  document.documentElement.style.setProperty('--safe-top', safeTop + 'px');
 }
 initSafeArea();
 initTheme();

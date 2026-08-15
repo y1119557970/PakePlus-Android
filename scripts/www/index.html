@@ -133,14 +133,14 @@ tailwind.config = {
   .scrollbar-hide::-webkit-scrollbar { display: none; width: 0; height: 0; }
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; -webkit-overflow-scrolling: touch; touch-action: pan-x; }
   .ring-stroke { -webkit-text-stroke: 2px #8b5cf6; }
-  .chip { background: rgba(139,92,246,0.1); color: #6d28d9; }
+  .chip { background: rgba(139,92,246,0.1); color: #7c3aed; }
   .dark .chip { background: rgba(167,139,250,0.15); color: #c4b5fd; }
   .tab-active { background: #ffffff; box-shadow: 0 2px 12px -4px rgba(139,92,246,0.3); color: #6d28d9; }
   .dark .tab-active { background: #312e81; color: #c4b5fd; box-shadow: 0 2px 12px -4px rgba(0,0,0,0.5); }
   .exam-timer { font-variant-numeric: tabular-nums; }
   .floaty { box-shadow: 0 10px 40px -10px rgba(124,58,237,0.5); }
   /* ============ 底部导航图标（SVG 线性风格） ============ */
-  .nav-svg { width: 26px; height: 26px; stroke: currentColor; fill: currentColor; transition: color 0.25s ease, transform 0.25s ease; }
+  .nav-svg { width: 28px; height: 28px; stroke: currentColor; fill: currentColor; transition: color 0.25s ease, transform 0.25s ease; }
   .nav-btn .nav-svg { color: #000; }
   .dark .nav-btn .nav-svg { color: #fff; }
   .nav-btn.nav-on .nav-svg { color: #7c3aed; transform: scale(1.12); }
@@ -149,9 +149,9 @@ tailwind.config = {
   .dark .nav-lbl { color: #6b7280; }
   .nav-btn.nav-on .nav-lbl { color: #7c3aed; font-weight: 700; }
   .dark .nav-btn.nav-on .nav-lbl { color: #c4b5fd; }
-  .nav-mock { margin-top: -22px; }
-  .nav-mock .nav-ic { width: 56px; height: 56px; border-radius: 999px; background: linear-gradient(135deg, #8b5cf6, #6d28d9); box-shadow: 0 10px 22px -6px rgba(124,58,237,0.65); display: flex; align-items: center; justify-content: center; transition: all 0.25s ease; }
-  .nav-mock .nav-ic .nav-svg { color: #fff; width: 30px; height: 30px; }
+  .nav-mock { margin-top: -26px; }
+  .nav-mock .nav-ic { width: 62px; height: 62px; border-radius: 999px; background: linear-gradient(135deg, #8b5cf6, #6d28d9); box-shadow: 0 10px 22px -6px rgba(124,58,237,0.65); display: flex; align-items: center; justify-content: center; transition: all 0.25s ease; }
+  .nav-mock .nav-ic .nav-svg { color: #fff; width: 33px; height: 33px; }
   .nav-mock .nav-lbl { color: #7c3aed; font-weight: 700; }
   .dark .nav-mock .nav-lbl { color: #c4b5fd; }
   /* ============ 功能卡片（图标居中简约风格） ============ */
@@ -201,6 +201,12 @@ tailwind.config = {
   /* Page */
   .page { display: none; }
   .page.active { display: block; }
+  /* 页面切换动画：离开淡出上移，进入淡入上浮 */
+  .page.page-enter { animation: pageIn 0.34s cubic-bezier(0.22,0.61,0.36,1) both; }
+  @keyframes pageIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  .page.page-leave { animation: pageOut 0.18s ease both; }
+  @keyframes pageOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-10px); } }
+  @media (prefers-reduced-motion: reduce) { .page.page-enter, .page.page-leave { animation: none; } }
 
   /* ============= Level Map ============= */
   .level-node {
@@ -395,8 +401,7 @@ tailwind.config = {
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
       <div>
-        <p class="text-sm text-primary-600 dark:text-primary-300 font-medium" id="greeting">你好，备考人</p>
-        <h1 class="text-2xl font-bold mt-1">中级财务题·高效精刷</h1>
+        <p class="text-lg font-bold text-primary-600 dark:text-primary-300 leading-none" id="greeting">你好，备考人</p>
       </div>
       <div class="flex items-center gap-2">
         <button onclick="toggleTheme()" class="w-9 h-9 flex items-center justify-center">
@@ -446,7 +451,7 @@ tailwind.config = {
       <div onclick="startMode('focus')" class="f-card">
         <img class="f-ic" src="图标/6.png" alt="考点精刷">
         <p class="font-bold text-base">考点精刷</p>
-        <p class="f-sub" id="descFocus">四星/五星 408 题优先 · 共 550 题</p>
+        <p class="f-sub" id="descFocus">刷基础·进阶·易错</p>
         <div class="mt-2.5 flex items-center">
           <span class="chip text-xs px-2 py-0.5 rounded-full" id="countFocus">550题</span>
         </div>
@@ -454,7 +459,7 @@ tailwind.config = {
       <div onclick="startMode('real')" class="f-card">
         <img class="f-ic" src="图标/7.png" alt="真题专项">
         <p class="font-bold text-base">真题专项</p>
-        <p class="f-sub" id="descReal">五星高频 360 题 · 命题趋势</p>
+        <p class="f-sub" id="descReal">历年真题精选</p>
         <div class="mt-2.5 flex items-center">
           <span class="chip text-xs px-2 py-0.5 rounded-full" id="countReal">≈400题</span>
         </div>
@@ -483,22 +488,12 @@ tailwind.config = {
           <span class="chip text-xs px-2 py-0.5 rounded-full" id="countChapter">550题</span>
         </div>
       </div>
-      <div onclick="startMode('order')" class="f-card">
-        <img class="f-ic" src="图标/15.png" alt="顺序刷题">
-        <p class="font-bold text-base">顺序刷题</p>
-        <p class="f-sub">按题号 1→550 · 不打乱</p>
+      <div onclick="showPage('page-type')" class="f-card">
+        <img class="f-ic" src="图标/16.png" alt="题型专攻">
+        <p class="font-bold text-base">题型专攻</p>
+        <p class="f-sub" id="descType">单选/多选/判断/计算/主观</p>
         <div class="mt-2.5 flex items-center">
-          <span class="chip text-xs px-2 py-0.5 rounded-full">550题</span>
-        </div>
-      </div>
-      <div onclick="showPage('page-type')" class="f-card col-span-2">
-        <div class="flex items-center gap-4 text-left">
-          <img class="f-ic !mb-0 shrink-0" style="width:56px;height:56px;" src="图标/16.png" alt="按题型刷题">
-          <div class="flex-1 min-w-0">
-            <p class="font-bold text-base">按题型刷题</p>
-            <p class="f-sub !mt-1" id="descType">单选 / 多选 / 判断 / 计算 / 主观 · 专项专攻</p>
-          </div>
-          <span class="chip text-xs px-2 py-0.5 rounded-full shrink-0" id="countType">550题</span>
+          <span class="chip text-xs px-2 py-0.5 rounded-full" id="countType">550题</span>
         </div>
       </div>
     </div>
@@ -832,8 +827,8 @@ tailwind.config = {
   </section>
 
   <!-- Bottom Nav (Home only) -->
-  <nav id="bottomNav" class="fixed left-1/2 -translate-x-1/2 w-full max-w-md px-4 z-40" style="bottom:calc(var(--safe-bottom, 0px) + 28px);padding-bottom:2px">
-    <div class="glass shadow-2xl shadow-primary-500/10 px-6 py-3 flex items-center justify-around border border-white/40 dark:border-purple-900/30" style="border-radius:9999px;background:rgba(255,255,255,0.3);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);box-shadow:0 10px 30px rgba(124,58,237,0.22),0 2px 10px rgba(0,0,0,0.08)">
+  <nav id="bottomNav" class="fixed left-1/2 -translate-x-1/2 w-full max-w-md px-4 z-40" style="bottom:max(28px, calc(var(--safe-bottom, 0px) + 6px));padding-bottom:2px">
+    <div class="glass shadow-2xl shadow-primary-500/10 px-6 py-4 flex items-center justify-around border border-white/40 dark:border-purple-900/30" style="border-radius:9999px;background:rgba(255,255,255,0.3);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);box-shadow:0 10px 30px rgba(124,58,237,0.22),0 2px 10px rgba(0,0,0,0.08)">
       <button onclick="showPage('page-home')" class="nav-btn nav-on flex-1 flex items-center justify-center" data-nav="home">
         <svg class="nav-svg" viewBox="0 0 1024 1024" fill="currentColor"><path d="M804.5568 945.664H206.7968a133.7856 133.7856 0 0 1-133.632-133.632V424.96a134.144 134.144 0 0 1 54.4256-107.52l297.8304-219.136a133.12 133.12 0 0 1 158.1056 0L883.456 317.44a133.9904 133.9904 0 0 1 54.784 107.8784v386.7136a133.8368 133.8368 0 0 1-133.6832 133.632zM504.6272 133.7344a72.0896 72.0896 0 0 0-42.8032 14.1312L163.84 367.0016A72.3968 72.3968 0 0 0 134.6048 424.96v387.072a72.2432 72.2432 0 0 0 72.192 72.192h597.76a72.2944 72.2944 0 0 0 72.2432-72.192V425.3696a72.6016 72.6016 0 0 0-29.5936-58.3168l-299.9296-219.3408a72.2432 72.2432 0 0 0-42.6496-13.9776z"/><path d="M505.7024 802.3552a30.72 30.72 0 0 1-30.72-30.72v-224.7168a30.72 30.72 0 0 1 61.44 0v224.7168a30.72 30.72 0 0 1-30.72 30.72z"/></svg>
 
@@ -867,6 +862,19 @@ tailwind.config = {
     <div class="sheet-btns">
       <button class="sheet-btn-cancel" onclick="hideExitModal()">继续答题</button>
       <button class="sheet-btn-confirm" onclick="exitQuiz()">确认退出</button>
+    </div>
+  </div>
+</div>
+
+<!-- Resume Choice Sheet (继续刷题 / 重置刷题) -->
+<div id="resumeSheet" class="sheet-mask" onclick="hideResumeSheet()">
+  <div class="sheet-sheet" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <h3 class="sheet-title">当前刷题进度</h3>
+    <p class="sheet-msg" id="resumeSheetMsg">从上次位置继续刷</p>
+    <div class="sheet-btns">
+      <button class="sheet-btn-cancel" onclick="chooseResumeAction('reset')">重置刷题</button>
+      <button class="sheet-btn-confirm" onclick="chooseResumeAction('continue')">继续刷题</button>
     </div>
   </div>
 </div>
@@ -24933,15 +24941,17 @@ const DEFAULT_STATE = () => ({
     mistakes: [],
     answered: {},
     markWrong: {},
-    // 考点精刷 / 真题专项 的进度记忆
+    // 刷题进度记忆（考点精刷/真题专项 按科目，题型专攻 按 科目__题型）
     // 结构：quizProgress[mode][subj] = { ids:[...], idx:N, updatedAt:ts }
     quizProgress: {
       focus: {},
       real: {},
+      type: {},
     },
   },
   quiz: {
     mode: 'focus',
+    typeSub: null,
     list: [],
     idx: 0,
     startTs: 0,
@@ -24962,6 +24972,7 @@ function initStore(){
     if(raw){
       const obj = JSON.parse(raw);
       STATE.store = Object.assign(DEFAULT_STATE().store, obj);
+      _normalizeStore();
       if(STATE.store.lastDay !== TODAY_KEY){
         const d1 = new Date(STATE.store.lastDay.replace(/^day_(\d{4})(\d{2})(\d{2})$/,'$1-$2-$3'));
         const d2 = new Date();
@@ -24974,6 +24985,13 @@ function initStore(){
   }catch(e){ console.warn('读取本地数据失败', e); }
 }
 function saveStore(){ try { localStorage.setItem(LS_KEY, JSON.stringify(STATE.store)); } catch(e){} }
+// 老存档/备份可能缺失或损坏 quizProgress 等字段，统一归一化，避免运行时报错阻断流程
+function _normalizeStore(){
+  const st = STATE.store;
+  if(!st.quizProgress || typeof st.quizProgress !== 'object'){ st.quizProgress = {focus:{}, real:{}, order:{}, type:{}}; }
+  if(!st.today || typeof st.today !== 'object'){ st.today = {}; }
+  if(!Array.isArray(st.mistakes)){ st.mistakes = []; }
+}
 
 /* =========================================================
    主题
@@ -25108,9 +25126,12 @@ function _closeSheetConfirm(confirmed){
   _sheetConfirmResolver = null;
 }
 
-function showPage(pageId){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById(pageId).classList.add('active');
+let _pageTimer = null;
+function _applyPageSwitch(pageId){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active','page-leave'));
+  const target = document.getElementById(pageId);
+  target.classList.add('active');
+  target.classList.remove('page-enter'); void target.offsetWidth; target.classList.add('page-enter');
   window.scrollTo(0,0);
   // 底部导航栏只在主标签页显示，答题页及子页面（题型刷题、模考结果等）隐藏
   const _navVisiblePages = ['page-home','page-level','page-mistakes','page-stats'];
@@ -25128,6 +25149,26 @@ function showPage(pageId){
   if(pageId==='page-mistakes') renderMistakes();
   if(pageId==='page-level') renderLevelPage();
   if(pageId==='page-type') renderTypePage();
+}
+function showPage(pageId){
+  const target = document.getElementById(pageId);
+  if(!target) return;
+  if(target.classList.contains('active')) return;
+  // 连续快速切换：立即完成上一次过渡，避免延迟叠加
+  if(_pageTimer){
+    clearTimeout(_pageTimer);
+    _pageTimer = null;
+    _applyPageSwitch(pageId);
+    return;
+  }
+  const current = document.querySelector('.page.active');
+  if(!current){ _applyPageSwitch(pageId); return; }
+  current.classList.remove('page-enter');
+  current.classList.add('page-leave');
+  _pageTimer = setTimeout(()=>{
+    _pageTimer = null;
+    _applyPageSwitch(pageId);
+  }, 170);
 }
 let _toastT = null;
 function toast(msg){
@@ -25188,27 +25229,25 @@ function renderHome(){
   const focusCount = pool.filter(q=>q.focus===true).length;
   const realCount = pool.filter(q=>q.real===true).length;
   const mockCounts = [44, 45, 59];
-  document.getElementById('countFocus').textContent = focusCount + '题';
-  document.getElementById('countReal').textContent = realCount + '题';
-  // 组装带进度记忆的描述
-  const buildProgressDesc = (base, total, mode) => {
-    let desc = `${base} · 共 ${total} 题`;
+  // 进度直接复用总题数标签：有进度时显示 xx/xx，否则显示 N题
+  const applyProgressLabel = (mode, total, elId) => {
+    const el = document.getElementById(elId);
+    if(!el) return;
+    let txt = '';
     try {
       const rec = (STATE.store.quizProgress && STATE.store.quizProgress[mode]) ? STATE.store.quizProgress[mode][s] : null;
       if(rec){
-        const done = rec.idx || 0;
-        const remaining = Math.max(0, (rec.ids ? rec.ids.length : total) - done);
-        if(done > 0 && remaining > 0){
-          desc = `${base} · 已刷 ${done}/${total} · 继续从第 ${done+1} 题`;
-        } else if(remaining <= 0){
-          desc = `${base} · 已完成 ${total} 题 · 点击从头刷`;
-        }
+        const listTotal = rec.ids ? rec.ids.length : total;
+        const done = Math.min(rec.idx || 0, listTotal);
+        if(done > 0) txt = `${done}/${listTotal}题`;
       }
     } catch(e) {}
-    return desc;
+    el.textContent = txt || (total + '题');
   };
-  document.getElementById('descFocus').textContent = buildProgressDesc('刷基础+进阶+易错', focusCount, 'focus');
-  document.getElementById('descReal').textContent = buildProgressDesc('历年真题精选', realCount, 'real');
+  document.getElementById('descFocus').textContent = '刷基础·进阶·易错';
+  document.getElementById('descReal').textContent = '历年真题精选';
+  applyProgressLabel('focus', focusCount, 'countFocus');
+  applyProgressLabel('real', realCount, 'countReal');
   document.getElementById('countMock').textContent = mockCounts[s] + '题';
   const subjMistakes = STATE.store.mistakes.filter(m=>m.subj===s).length;
   document.getElementById('countMistakes').textContent = subjMistakes + '题';
@@ -25233,9 +25272,16 @@ function renderHome(){
 }
 
 /* =========================================================
-   考点精刷 / 真题专项 的进度记忆辅助
+   刷题进度记忆辅助（考点精刷/真题专项/题型专攻）
    ========================================================= */
-const PROGRESS_MODES = new Set(['focus','real']);
+const PROGRESS_MODES = new Set(['focus','real','type']);
+
+// 进度存储子键：普通模式按科目，题型专攻按 科目__题型
+function _progressKey(){
+  const mode = STATE.quiz.mode;
+  if(mode === 'type') return STATE.current_subject + '__' + (STATE.quiz.typeSub || '');
+  return STATE.current_subject;
+}
 
 function _mergeProgressIds(savedIds, freshIds){
   // 1. 先按 savedIds 保留老顺序（稳定用户记忆的位置）
@@ -25284,9 +25330,10 @@ function _restoreQuizProgress(mode, s, freshList){
 function _saveQuizProgress(){
   const mode = STATE.quiz.mode;
   if(!PROGRESS_MODES.has(mode)) return;
-  const s = STATE.current_subject;
+  const s = _progressKey();
   const ids = STATE.quiz.list.map(q=>q.id);
   const idx = STATE.quiz.idx;
+  if(!STATE.store.quizProgress || typeof STATE.store.quizProgress !== 'object'){ STATE.store.quizProgress = {focus:{}, real:{}, order:{}, type:{}}; }
   const qp = STATE.store.quizProgress;
   if(!qp[mode]) qp[mode] = {};
   qp[mode][s] = { ids, idx, updatedAt: Date.now() };
@@ -25295,10 +25342,9 @@ function _saveQuizProgress(){
 
 function _resetQuizProgress(mode, s){
   const qp = STATE.store.quizProgress;
-  if(qp[mode] && qp[mode][s]){
-    delete qp[mode][s];
-    saveStore();
-  }
+  if(!qp || !qp[mode] || !qp[mode][s]) return;
+  delete qp[mode][s];
+  saveStore();
 }
 
 /* =========================================================
@@ -25347,21 +25393,71 @@ function buildList(mode){
       pool.forEach(q=>map[q.id]=q);
       return ids.map(id=>map[id]).filter(Boolean);
     }
-    case 'order':
-      return pool;
   }
   return pool;
 }
 
 /* =========================================================
+   刷题进度选择弹窗（继续刷题 / 重置刷题）
+   ========================================================= */
+let _resumeDecision = null; // 弹窗选择结果：'continue' | 'reset' | null
+function _showResumeSheet(mode, key){
+  const mask = document.getElementById('resumeSheet');
+  if(!mask) return;
+  if(key == null) key = STATE.current_subject;
+  let msg = '从上次位置继续刷';
+  try {
+    const rec = (STATE.store.quizProgress && STATE.store.quizProgress[mode]) ? STATE.store.quizProgress[mode][key] : null;
+    if(rec && rec.ids){
+      const listTotal = rec.ids.length;
+      const done = Math.min(rec.idx || 0, listTotal);
+      msg = `已刷 ${done}/${listTotal} 题，继续从第${done+1}题开始刷`;
+    }
+  } catch(e) {}
+  document.getElementById('resumeSheetMsg').textContent = msg;
+  mask.classList.remove('hidden');
+  requestAnimationFrame(()=>mask.classList.add('open'));
+}
+function hideResumeSheet(){
+  const mask = document.getElementById('resumeSheet');
+  if(mask) mask.classList.remove('open');
+}
+function chooseResumeAction(action){
+  const mask = document.getElementById('resumeSheet');
+  if(mask) mask.classList.remove('open');
+  const mode = _resumeSheetMode;
+  const key = _resumeSheetKey;
+  if(!mode) return;
+  _resumeDecision = action;
+  if(action === 'reset'){
+    _resetQuizProgress(mode, key);
+    renderHome(); // 首页标签恢复为 N题
+    if(mode === 'type') renderTypePage(); // 题型页进度同步刷新
+  }
+  if(mode === 'type'){
+    startTypeQuiz(String(key).split('__')[1]);
+  } else {
+    startMode(mode);
+  }
+  _resumeDecision = null;
+}
+let _resumeSheetMode = null;
+let _resumeSheetKey = null;
+
+/* =========================================================
    进入刷题（通用启动器）
    ========================================================= */
-function _beginQuiz(list, label){
+function _activePageId(){ const el = document.querySelector('.page.active'); return el ? el.id : 'page-home'; }
+let _quizReturnPage = 'page-home'; // 进入答题前的来源页，退出时返回该页
+function _beginQuiz(list, label, opts){
+  opts = opts || {};
   if(!list.length){ toast('没有可刷的题目'); return; }
+  _quizReturnPage = opts.returnPage || _activePageId();
   STATE.quiz = DEFAULT_STATE().quiz;
-  STATE.quiz.mode = 'custom';
+  STATE.quiz.mode = opts.mode || 'custom';
+  STATE.quiz.typeSub = opts.typeSub || null;
   STATE.quiz.list = list;
-  STATE.quiz.idx = 0;
+  STATE.quiz.idx = opts.startIdx || 0;
   STATE.quiz.startTs = Date.now();
   document.getElementById('quizModeLabel').textContent = label;
   document.getElementById('quizSubjectName').textContent = SUBJECTS[STATE.current_subject];
@@ -25375,13 +25471,33 @@ function _beginQuiz(list, label){
   }, 1000);
   showPage('page-quiz');
   renderQuestion();
+  if(opts.resumedMsg) setTimeout(()=>toast(opts.resumedMsg), 320);
+  // 首次进入也保存一次，确保后续顺序稳定
+  if(PROGRESS_MODES.has(STATE.quiz.mode)) _saveQuizProgress();
 }
 function startMode(mode){
   const s = STATE.current_subject;
+  // 考点精刷/真题专项：存在未完成进度时，先弹窗选择继续或重置
+  if((mode==='focus' || mode==='real') && !_resumeDecision){
+    try {
+      const rec = (STATE.store.quizProgress && STATE.store.quizProgress[mode]) ? STATE.store.quizProgress[mode][s] : null;
+      if(rec){
+        const listTotal = rec.ids ? rec.ids.length : buildList(mode).length;
+        const done = rec.idx || 0;
+        if(done > 0 && done < listTotal){
+          _resumeSheetMode = mode;
+          _resumeSheetKey = s;
+          _showResumeSheet(mode, s);
+          return;
+        }
+      }
+    } catch(e) {}
+  }
   let list = buildList(mode);
   if(!list.length){ toast(mode==='mistakes' ? '暂无错题，继续保持！' : '没有可刷的题目'); return; }
   STATE.quiz = DEFAULT_STATE().quiz;
   STATE.quiz.mode = mode;
+  _quizReturnPage = _activePageId();
   let startIdx = 0;
   let resumedMsg = null;
   // focus / real：恢复进度（稳定题目顺序 + 记忆 idx）
@@ -25402,7 +25518,7 @@ function startMode(mode){
   STATE.quiz.list = list;
   STATE.quiz.idx = startIdx;
   STATE.quiz.startTs = Date.now();
-  const label = {focus:'考点精刷', real:'真题专项', mock:'模拟押题', mistakes:'错题复盘', order:'顺序精刷'}[mode] || '刷题';
+  const label = {focus:'考点精刷', real:'真题专项', mock:'模拟押题', mistakes:'错题复盘'}[mode] || '刷题';
   document.getElementById('quizModeLabel').textContent = label;
   document.getElementById('quizSubjectName').textContent = SUBJECTS[STATE.current_subject];
   document.getElementById('quizTotal').textContent = list.length;
@@ -25459,6 +25575,7 @@ function hideMockSheet(){
     noteSheet: () => hideNoteSheet(),
     mockSheet: () => hideMockSheet(),
     settingsSheet: () => hideSettingsSheet(),
+    resumeSheet: () => hideResumeSheet(),
     _sheetConfirm: () => _closeSheetConfirm(false)
   };
   let sheet = null, startY = 0, dy = 0, lastY = 0, lastT = 0, vel = 0;
@@ -25556,14 +25673,14 @@ function confirmExitQuiz(){ const m = document.getElementById('exitModal'); m.cl
 function hideExitModal(){ const m = document.getElementById('exitModal'); m.classList.remove('open'); setTimeout(()=>m.classList.add('hidden'), 320); }
 function exitQuiz(){
   hideExitModal();
-  // 退出前保存 focus/real 的当前进度
-  if(PROGRESS_MODES.has(STATE.quiz.mode)) _saveQuizProgress();
+  // 退出前保存当前刷题进度（保存失败不能阻断退出）
+  if(PROGRESS_MODES.has(STATE.quiz.mode)){ try{ _saveQuizProgress(); }catch(e){ console.warn('保存进度失败', e); } }
   clearInterval(STATE.quiz.timerId);
   STATE.quiz.timerId = null;
   if(STATE.quiz.mode==='mock' && STATE.quiz.mockRight+STATE.quiz.mockWrong.length>0){
     finishMock(); return;
   }
-  showPage('page-home');
+  showPage(_quizReturnPage || 'page-home');
 }
 
 function startLevelChapter(ci){
@@ -25689,6 +25806,8 @@ function renderTypePage(){
   order.forEach(t=>{
     const qs = pool.filter(q=>q.type===t);
     if(!qs.length) return;
+    const tRec = (STATE.store.quizProgress && STATE.store.quizProgress.type) ? STATE.store.quizProgress.type[s + '__' + t] : null;
+    const resumeIdx = (tRec && Array.isArray(tRec.ids) && (tRec.idx||0) > 0 && (tRec.idx||0) < tRec.ids.length) ? tRec.idx : -1;
     const doneArr = qs.filter(q=>STATE.store.answered[q.id]);
     const rightN = doneArr.filter(q=>STATE.store.answered[q.id].correct).length;
     const acc = doneArr.length ? Math.round(rightN*100/doneArr.length) : null;
@@ -25701,6 +25820,7 @@ function renderTypePage(){
         <div class="flex items-center gap-2">
           <p class="font-bold">${TYPE_LABEL[t]||t}</p>
           <span class="text-xs text-gray-500 dark:text-gray-400">${qs.length}题</span>
+          ${resumeIdx >= 0 ? `<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary-50 dark:bg-primary-900/40 text-primary-600 dark:text-primary-300">▶ 继续第 ${resumeIdx+1} 题</span>` : ''}
         </div>
         <span class="text-xs font-bold ${acc===null?'text-gray-400':acc>=65?'text-emerald-500':'text-rose-500'}">${acc===null?'未开始':'正确率 '+acc+'%'}</span>
       </div>
@@ -25712,9 +25832,44 @@ function renderTypePage(){
   });
 }
 function startTypeQuiz(t){
-  const qs = bankOf(STATE.current_subject).filter(q=>q.type===t);
+  const s = STATE.current_subject;
+  const qs = bankOf(s).filter(q=>q.type===t);
   if(!qs.length){ toast('该题型暂无题目'); return; }
-  _beginQuiz(qs.slice(), '题型专攻 · ' + (TYPE_LABEL[t]||t));
+  const mode = 'type';
+  const key = s + '__' + t;
+  // 存在未完成进度时，先弹窗选择继续或重置
+  if(!_resumeDecision){
+    try {
+      const rec = (STATE.store.quizProgress && STATE.store.quizProgress[mode]) ? STATE.store.quizProgress[mode][key] : null;
+      if(rec){
+        const listTotal = rec.ids ? rec.ids.length : qs.length;
+        const done = rec.idx || 0;
+        if(done > 0 && done < listTotal){
+          _resumeSheetMode = mode;
+          _resumeSheetKey = key;
+          _showResumeSheet(mode, key);
+          return;
+        }
+      }
+    } catch(e) {}
+  }
+  let list = qs.slice();
+  let startIdx = 0;
+  let resumedMsg = null;
+  // 恢复进度（稳定题目顺序 + 记忆 idx）
+  const restored = _restoreQuizProgress(mode, key, list);
+  if(restored){
+    list = restored.list;
+    startIdx = restored.idx || 0;
+    if(restored.finished){
+      // 已完成过本轮：重置从头开始，并清掉进度
+      startIdx = 0;
+      _resetQuizProgress(mode, key);
+    } else if(startIdx > 0){
+      resumedMsg = `从上次第 ${startIdx+1} 题继续`;
+    }
+  }
+  _beginQuiz(list, '题型专攻 · ' + (TYPE_LABEL[t]||t), { mode, typeSub: t, startIdx, resumedMsg });
 }
 
 /* =========================================================
@@ -25927,18 +26082,18 @@ function nextQuestion(){
     const card = document.getElementById('qCard');
     card.classList.remove('slide-in'); void card.offsetWidth; card.classList.add('slide-in');
     renderQuestion();
-    // 保存 focus/real 进度
+    // 保存进度（考点精刷/真题专项/题型专攻）
     if(PROGRESS_MODES.has(STATE.quiz.mode)) _saveQuizProgress();
   } else {
     if(STATE.quiz.mode==='mock'){
       finishMock();
     } else {
       // 本轮完成：重置进度，下次进入从头开始
-      if(PROGRESS_MODES.has(STATE.quiz.mode)) _resetQuizProgress(STATE.quiz.mode, STATE.current_subject);
+      if(PROGRESS_MODES.has(STATE.quiz.mode)) _resetQuizProgress(STATE.quiz.mode, _progressKey());
       toast('🎉 本轮已完成');
       clearInterval(STATE.quiz.timerId);
       STATE.quiz.timerId = null;
-      setTimeout(()=>showPage('page-home'), 800);
+      setTimeout(()=>showPage(_quizReturnPage || 'page-home'), 800);
     }
   }
 }
@@ -26123,6 +26278,7 @@ function startFromMistake(qid){
   const all = bankOf(s);
   const pos = all.findIndex(q=>q.id===qid);
   const list = pos>=0 ? all.slice(pos).concat(all.slice(0,pos)) : all;
+  _quizReturnPage = _activePageId();
   STATE.quiz = DEFAULT_STATE().quiz;
   STATE.quiz.mode = 'mistakes';
   STATE.quiz.list = list;
@@ -26291,10 +26447,10 @@ function renderStats(){
       tips.push(`用「真题专项」保持手感，把错题本回顾 1~2 遍清除盲区，即可用「模拟押题」做考前演练，冲刺高分。`);
     } else if(acc>=65){
       stageTxt = `你已累计刷题 ${total} 道，正确率 ${acc}%，基础较扎实，还有提升空间。`;
-      tips.push(`用「考点精刷」集中攻克四星/五星高频易错题，再配合「按题型刷题」补强弱项题型，向 80% 冲刺。`);
+      tips.push(`用「考点精刷」集中攻克四星/五星高频易错题，再配合「题型专攻」补强弱项题型，向 80% 冲刺。`);
     } else if(acc>=50){
       stageTxt = `你已累计刷题 ${total} 道，正确率 ${acc}%，基础有待夯实，暂不建议急于模考。`;
-      tips.push(`先用「章节闯关」逐章梳理（按章节顺序逐章刷题），再用「考点精刷」集中攻克高频考点，每轮刷完及时复盘错题。`);
+      tips.push(`先用「章节闯关」逐章梳理知识框架，再用「考点精刷」集中攻克高频考点，每轮刷完及时复盘错题。`);
     } else {
       stageTxt = `你已累计刷题 ${total} 道，正确率 ${acc}%，建议先回归教材梳理知识框架，再配合刷题巩固。`;
       tips.push(`用「章节闯关」逐章刷题，每章先看懂解析再做下一题；正确率稳定到 65% 以上后再进入模考环节。`);
@@ -26306,7 +26462,7 @@ function renderStats(){
     }
     // ③ 最薄弱题型
     if(weakType && weakType.acc < 0.65){
-      tips.push(`${TYPE_LABEL[weakType.t]}正确率仅 ${Math.round(weakType.acc*100)}%（共 ${weakType.total} 题），是当前最弱题型，建议用「按题型刷题」专项突破。`);
+      tips.push(`${TYPE_LABEL[weakType.t]}正确率仅 ${Math.round(weakType.acc*100)}%（共 ${weakType.total} 题），是当前最弱题型，建议用「题型专攻」专项突破。`);
     }
     // ④ 错题复盘
     if(subjMistakes>0){
@@ -26342,6 +26498,7 @@ function importData(e){
     try{
       const obj = JSON.parse(r.result);
       STATE.store = Object.assign(DEFAULT_STATE().store, obj);
+      _normalizeStore();
       saveStore(); renderHome();
       toast('恢复成功');
     }catch(err){ toast('文件格式错误'); }

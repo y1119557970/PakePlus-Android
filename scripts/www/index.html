@@ -202,6 +202,9 @@ tailwind.config = {
   .dark .tbl-caption { color: #9ca3af; }
   /* Page */
   .page { display: none; }
+  /* 页面顶部间距：基础间距 + 状态栏安全区（刘海屏适配） */
+  section.page { padding-top: calc(1.5rem + var(--safe-top, 0px)) !important; }
+  #page-home, #page-mock-result { padding-top: calc(2.5rem + var(--safe-top, 0px)) !important; }
   .page.active { display: block; }
   /* 页面切换动画：离开淡出上移，进入淡入上浮 */
   .page.page-enter { animation: pageIn 0.34s cubic-bezier(0.22,0.61,0.36,1) both; }
@@ -368,6 +371,9 @@ tailwind.config = {
   #noteSheet .sheet-msg { margin-bottom: 14px; }
   #noteSheet #noteSheetInput { flex: 1; height: auto; min-height: 0; }
   #noteSheet .sheet-btns { margin-top: 16px; }
+  /* 筛选悬浮面板开关动效：从图标处缩放 + 淡入淡出 */
+  #mfPanel { opacity: 0; transform: scale(0.85); transform-origin: top right; visibility: hidden; pointer-events: none; transition: opacity 0.18s ease, transform 0.18s ease, visibility 0s linear 0.18s; }
+  #mfPanel.mf-open { opacity: 1; transform: scale(1); visibility: visible; pointer-events: auto; transition: opacity 0.18s ease, transform 0.2s cubic-bezier(0.34, 1.3, 0.64, 1), visibility 0s; }
   /* 错题筛选悬浮面板选项 */
   .mf-opt { width: 100%; color: #4b5563; background: transparent; border: none; text-align: center; transition: background 0.12s ease, color 0.12s ease; cursor: pointer; }
   .mf-opt.mf-active { background: rgba(139,92,246,0.08); color: #6d28d9; }
@@ -646,7 +652,7 @@ tailwind.config = {
           <button id="mfFilterBtn" onclick="toggleMistakeFilterPanel()" class="clear-btn flex items-center justify-center w-8 h-8" title="筛选">
             <svg viewBox="-70 -40 1164 1164" width="20" height="20" fill="currentColor" style="transform:translateY(-1.5px)"><path d="M589.960533 478.685867l132.437334-139.400534A43.144533 43.144533 0 1 1 785.066667 398.677333L664.439467 525.653333l11.8784-29.764266v442.094933a83.899733 83.899733 0 0 1-83.694934 83.626667 83.285333 83.285333 0 0 1-60.074666-25.531734L391.714133 850.602667a83.5584 83.5584 0 0 1-23.552-58.1632V516.164267L73.9328 232.2432a135.7824 135.7824 0 0 1-29.354667-148.343467A135.9872 135.9872 0 0 1 170.461867 0h676.4544c55.296 0 104.721067 33.041067 125.815466 84.104533a135.5776 135.5776 0 0 1-28.8768 147.524267l-59.8016 62.941867a43.144533 43.144533 0 1 1-62.600533-59.392c23.210667-24.576 23.210667-24.576 60.6208-63.761067a49.629867 49.629867 0 0 0-35.157333-85.060267h-676.522667a49.629867 49.629867 0 0 0-46.011733 30.72 49.152 49.152 0 0 0 10.171733 53.6576l320.170667 308.770134v311.773866l135.304533 140.014934v-452.608z"/></svg>
           </button>
-          <div id="mfPanel" class="hidden absolute right-0 top-full mt-2 z-50 w-36 rounded-3xl overflow-hidden bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-xl">
+          <div id="mfPanel" class="absolute right-0 top-full mt-2 z-50 w-36 rounded-3xl overflow-hidden bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-xl">
             <button onclick="selectMistakeFilter('all')" data-mf="all" class="mf-opt mf-active px-3.5 py-2.5 text-sm font-semibold">全部</button>
             <button onclick="selectMistakeFilter('concept')" data-mf="concept" class="mf-opt px-3.5 py-2.5 text-sm font-semibold">概念混淆</button>
             <button onclick="selectMistakeFilter('calc')" data-mf="calc" class="mf-opt px-3.5 py-2.5 text-sm font-semibold">计算失误</button>
@@ -25178,6 +25184,8 @@ function showPage(pageId){
   const target = document.getElementById(pageId);
   if(!target) return;
   if(target.classList.contains('active')) return;
+  // 记录页面栈（返回手势逐级回退用）；popstate 内部切换时不重复入栈
+  if(!_navSilent) _navPush(pageId);
   // 连续快速切换：立即完成上一次过渡，避免延迟叠加
   if(_pageTimer){
     clearTimeout(_pageTimer);
@@ -25194,6 +25202,63 @@ function showPage(pageId){
     _applyPageSwitch(pageId);
   }, 170);
 }
+
+/* =========================================================
+   手机端返回手势（侧滑/物理返回键）：页内逐级返回
+   ========================================================= */
+const _navStack = ['page-home'];
+let _navSilent = false;
+let _quizLive = false;
+function _navPush(pageId){
+  if(_navStack[_navStack.length - 1] === pageId) return;
+  _navStack.push(pageId);
+  try{ history.pushState({nav: pageId}, ''); }catch(e){}
+}
+// 关闭当前打开的最上层弹窗，返回 true 表示有关闭动作
+function _hideTopOverlay(){
+  const sc = document.getElementById('_sheetConfirm');
+  if(sc && sc.classList.contains('open')){ _closeSheetConfirm(false); return true; }
+  const pairs = [
+    ['exitModal', hideExitModal],
+    ['resumeSheet', hideResumeSheet],
+    ['markSheet', hideMarkSheet],
+    ['noteSheet', hideNoteSheet],
+    ['mockSheet', hideMockSheet],
+    ['settingsSheet', hideSettingsSheet]
+  ];
+  for(const p of pairs){
+    const el = document.getElementById(p[0]);
+    if(el && el.classList.contains('open')){ p[1](); return true; }
+  }
+  const goal = document.getElementById('goalModal');
+  if(goal && goal.classList.contains('open')){ closeGoalModal(); return true; }
+  const panel = document.getElementById('mfPanel');
+  if(panel && panel.classList.contains('mf-open')){ panel.classList.remove('mf-open'); return true; }
+  return false;
+}
+window.addEventListener('popstate', ()=>{
+  // 有弹窗打开时，返回先关弹窗，不切页面
+  if(_hideTopOverlay()){
+    try{ history.pushState({nav: _navStack[_navStack.length - 1]}, ''); }catch(e){}
+    return;
+  }
+  if(_navStack.length > 1){
+    _navSilent = true;
+    let dest = null;
+    while(_navStack.length > 1){
+      _navStack.pop();
+      const top = _navStack[_navStack.length - 1];
+      // 刷题已退出/结束时，跳过已失效的答题页继续回退
+      if(top === 'page-quiz' && !_quizLive) continue;
+      dest = top;
+      break;
+    }
+    if(dest) showPage(dest);
+    _navSilent = false;
+  }
+  // 已在首页：交由浏览器默认行为（退出应用）
+});
+
 let _toastT = null;
 function toast(msg){
   const el = document.getElementById('toast');
@@ -25476,6 +25541,7 @@ let _quizReturnPage = 'page-home'; // 进入答题前的来源页，退出时返
 function _beginQuiz(list, label, opts){
   opts = opts || {};
   if(!list.length){ toast('没有可刷的题目'); return; }
+  _quizLive = true;
   _quizReturnPage = opts.returnPage || _activePageId();
   STATE.quiz = DEFAULT_STATE().quiz;
   STATE.quiz.mode = opts.mode || 'custom';
@@ -25697,6 +25763,7 @@ function confirmExitQuiz(){ const m = document.getElementById('exitModal'); m.cl
 function hideExitModal(){ const m = document.getElementById('exitModal'); m.classList.remove('open'); setTimeout(()=>m.classList.add('hidden'), 320); }
 function exitQuiz(){
   hideExitModal();
+  _quizLive = false;
   // 退出前保存当前刷题进度（保存失败不能阻断退出）
   if(PROGRESS_MODES.has(STATE.quiz.mode)){ try{ _saveQuizProgress(); }catch(e){ console.warn('保存进度失败', e); } }
   clearInterval(STATE.quiz.timerId);
@@ -26164,6 +26231,7 @@ function nextQuestion(){
       // 本轮完成：重置进度，下次进入从头开始
       if(PROGRESS_MODES.has(STATE.quiz.mode)) _resetQuizProgress(STATE.quiz.mode, _progressKey());
       toast('🎉 本轮已完成');
+      _quizLive = false;
       clearInterval(STATE.quiz.timerId);
       STATE.quiz.timerId = null;
       setTimeout(()=>showPage(_quizReturnPage || 'page-home'), 800);
@@ -26293,21 +26361,21 @@ function autoAddMistake(q, reason, note){
 /* 错题筛选：当前筛选状态 + 顶部筛选图标悬浮面板 */
 let _mfFilter = 'all';
 function toggleMistakeFilterPanel(){
-  document.getElementById('mfPanel').classList.toggle('hidden');
+  document.getElementById('mfPanel').classList.toggle('mf-open');
 }
 function selectMistakeFilter(f){
   _mfFilter = f;
   document.querySelectorAll('.mf-opt').forEach(b=>b.classList.toggle('mf-active', b.dataset.mf===f));
   const btn = document.getElementById('mfFilterBtn');
   if(btn) btn.classList.toggle('mf-on', f!=='all');
-  document.getElementById('mfPanel').classList.add('hidden');
+  document.getElementById('mfPanel').classList.remove('mf-open');
   renderMistakes(f);
 }
 // 点击筛选面板外区域自动关闭
 document.addEventListener('click', (e)=>{
   const panel = document.getElementById('mfPanel');
-  if(panel && !panel.classList.contains('hidden') && !e.target.closest('.mf-wrap')){
-    panel.classList.add('hidden');
+  if(panel && panel.classList.contains('mf-open') && !e.target.closest('.mf-wrap')){
+    panel.classList.remove('mf-open');
   }
 });
 function renderMistakes(forceFilter){
@@ -26408,6 +26476,7 @@ function clearMistakes(){
    模考结束
    ========================================================= */
 function finishMock(){
+  _quizLive = false;
   clearInterval(STATE.quiz.timerId);
   STATE.quiz.timerId = null;
   const total = STATE.quiz.mockRight + STATE.quiz.mockWrong.length;
@@ -26620,6 +26689,13 @@ function initSafeArea(){
   }
   document.documentElement.style.setProperty('--safe-bottom', safeBottom + 'px');
   document.documentElement.style.setProperty('--safe-bottom-compat', 'calc(env(safe-area-inset-bottom) + ' + safeBottom + 'px)');
+  // 顶部安全区（手机状态栏/刘海）
+  const probeTop = document.createElement('div');
+  probeTop.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:env(safe-area-inset-top);height:constant(safe-area-inset-top);pointer-events:none';
+  document.body.appendChild(probeTop);
+  const safeTop = probeTop.offsetHeight;
+  probeTop.remove();
+  document.documentElement.style.setProperty('--safe-top', safeTop + 'px');
 }
 initSafeArea();
 initTheme();

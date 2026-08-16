@@ -139,6 +139,8 @@ tailwind.config = {
   .dark .tab-active { background: #312e81; color: #c4b5fd; box-shadow: 0 2px 12px -4px rgba(0,0,0,0.5); }
   .exam-timer { font-variant-numeric: tabular-nums; }
   .floaty { box-shadow: 0 10px 40px -10px rgba(124,58,237,0.5); }
+  /* 全局提示条始终位于最上层（高于弹窗遮罩 z-100），兼做 Tailwind 任意值类的兼容兑底 */
+  #toast { z-index: 200; }
   /* ============ 底部导航图标（SVG 线性风格） ============ */
   .nav-svg { width: 28px; height: 28px; stroke: currentColor; fill: currentColor; transition: color 0.25s ease, transform 0.25s ease; }
   .nav-btn .nav-svg { color: #000; }
@@ -380,8 +382,22 @@ tailwind.config = {
   /* 笔记弹窗：半屏高度，输入框自动填充剩余空间 */
   #noteSheet .sheet-sheet { height: 50vh; display: flex; flex-direction: column; }
   #noteSheet .sheet-msg { margin-bottom: 14px; }
-  #noteSheet #noteSheetInput { flex: 1; height: auto; min-height: 0; }
+  #noteSheet .note-box { flex: 1; position: relative; min-height: 0; }
+  #noteSheet .note-box textarea { position: absolute; inset: 0; width: 100%; height: 100%; }
   #noteSheet .sheet-btns { margin-top: 16px; }
+  /* 标记易错弹窗：加高至六屏，笔记输入框自动填充剩余空间 */
+  #markSheet .sheet-sheet { height: 62vh; display: flex; flex-direction: column; }
+  #markSheet .sheet-msg { margin-bottom: 16px; }
+  #markSheet .mark-note-wrap { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    #markSheet .mark-note-box { flex: 1; position: relative; min-height: 96px; }
+    #markSheet .mark-note-box textarea { position: absolute; inset: 0; width: 100%; height: 100%; }
+    /* 彩色笔记叠加层：盖在输入框上逐字渲染颜色，切换颜色不影响已输入文字；中文输入法组合串仍由底层输入框正常显示 */
+    .mark-note-overlay { position: absolute; inset: 0; border: 2px solid transparent; border-radius: 16px; padding: 12px 16px; font-size: .875rem; line-height: 1.25rem; white-space: pre-wrap; overflow-wrap: break-word; overflow: hidden; pointer-events: none; color: inherit; }
+  #markSheet .sheet-btns { margin-top: 16px; }
+  /* 三色笔记圆点：选中时外圈高亮 */
+  .note-color-dot { width: 20px; height: 20px; border-radius: 999px; border: none; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+  .note-color-dot.nc-on { transform: scale(1.12); box-shadow: 0 0 0 2px #fff, 0 0 0 4px currentColor; }
+  .dark .note-color-dot.nc-on { box-shadow: 0 0 0 2px #1f2937, 0 0 0 4px currentColor; }
   /* 筛选悬浮面板开关动效：从图标处缩放 + 淡入淡出 */
   #mfPanel { opacity: 0; transform: scale(0.85); transform-origin: top right; visibility: hidden; pointer-events: none; transition: opacity 0.18s ease, transform 0.18s ease, visibility 0s linear 0.18s; }
   #mfPanel.mf-open { opacity: 1; transform: scale(1); visibility: visible; pointer-events: auto; transition: opacity 0.18s ease, transform 0.2s cubic-bezier(0.34, 1.3, 0.64, 1), visibility 0s; }
@@ -472,11 +488,11 @@ tailwind.config = {
       </div>
     </div>
 
-    <!-- Subject Tabs -->
-    <div class="flex gap-2 mb-6 overflow-x-auto scrollbar -mx-4 px-4 pb-1">
-      <button onclick="switchSubject(0)" data-subj="0" class="subj-tab tab-active px-5 py-2.5 rounded-2xl text-sm font-semibold whitespace-nowrap transition-all">中级会计实务</button>
-      <button onclick="switchSubject(1)" data-subj="1" class="subj-tab px-5 py-2.5 rounded-2xl text-sm font-semibold whitespace-nowrap transition-all text-gray-500 dark:text-gray-400">中级财务管理</button>
-      <button onclick="switchSubject(2)" data-subj="2" class="subj-tab px-5 py-2.5 rounded-2xl text-sm font-semibold whitespace-nowrap transition-all text-gray-500 dark:text-gray-400">中级经济法</button>
+    <!-- Subject Tabs（分段条：三等分无背景框，点击仅切换背景/字体颜色，小屏无横向滚动） -->
+    <div class="flex w-full gap-1 rounded-2xl mb-6">
+      <button onclick="switchSubject(0)" data-subj="0" class="subj-tab tab-active flex-1 min-w-0 py-2.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all">中级会计实务</button>
+      <button onclick="switchSubject(1)" data-subj="1" class="subj-tab flex-1 min-w-0 py-2.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all text-gray-500 dark:text-gray-400">中级财务管理</button>
+      <button onclick="switchSubject(2)" data-subj="2" class="subj-tab flex-1 min-w-0 py-2.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all text-gray-500 dark:text-gray-400">中级经济法</button>
     </div>
 
     <div class="grid grid-cols-2 gap-4 mb-8">
@@ -655,10 +671,11 @@ tailwind.config = {
 
   <!-- ============ MISTAKES PAGE ============ -->
   <section id="page-mistakes" class="page px-4 pt-6 pb-32">
-    <div class="flex items-center justify-between mb-6">
-      <button onclick="showPage('page-home')" class="back-btn"><svg viewBox="0 0 24 24" class="chevron-left"><path d="M15 19l-7-7 7-7"/></svg></button>
-      <h1 class="text-lg font-bold">错题复盘</h1>
-      <div class="flex items-center gap-1 flex-row-reverse">
+    <div class="relative flex items-center justify-between mb-6">
+      <button onclick="showPage('page-home')" class="back-btn relative z-10"><svg viewBox="0 0 24 24" class="chevron-left"><path d="M15 19l-7-7 7-7"/></svg></button>
+      <!-- 标题绝对定位居中：以最左返回图标与最右筛选图标的跨度为基准（两图标中心恰好关于行宽中点对称） -->
+      <h1 class="absolute left-0 right-0 top-1/2 -translate-y-1/2 text-center text-lg font-bold pointer-events-none">错题复盘</h1>
+      <div class="relative z-10 flex items-center gap-1 flex-row-reverse">
         <div class="mf-wrap relative">
           <button id="mfFilterBtn" onclick="toggleMistakeFilterPanel()" class="clear-btn flex items-center justify-center w-8 h-8" title="筛选">
             <svg viewBox="-70 -40 1164 1164" width="20" height="20" fill="currentColor" style="transform:translateY(-1.5px)"><path d="M589.960533 478.685867l132.437334-139.400534A43.144533 43.144533 0 1 1 785.066667 398.677333L664.439467 525.653333l11.8784-29.764266v442.094933a83.899733 83.899733 0 0 1-83.694934 83.626667 83.285333 83.285333 0 0 1-60.074666-25.531734L391.714133 850.602667a83.5584 83.5584 0 0 1-23.552-58.1632V516.164267L73.9328 232.2432a135.7824 135.7824 0 0 1-29.354667-148.343467A135.9872 135.9872 0 0 1 170.461867 0h676.4544c55.296 0 104.721067 33.041067 125.815466 84.104533a135.5776 135.5776 0 0 1-28.8768 147.524267l-59.8016 62.941867a43.144533 43.144533 0 1 1-62.600533-59.392c23.210667-24.576 23.210667-24.576 60.6208-63.761067a49.629867 49.629867 0 0 0-35.157333-85.060267h-676.522667a49.629867 49.629867 0 0 0-46.011733 30.72 49.152 49.152 0 0 0 10.171733 53.6576l320.170667 308.770134v311.773866l135.304533 140.014934v-452.608z"/></svg>
@@ -929,9 +946,20 @@ tailwind.config = {
       <button onclick="_selectMarkType('memory')" data-mt="memory" class="mark-type-btn shrink-0 px-4 h-10 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-semibold transition-all">记忆疏漏</button>
       <button onclick="_selectMarkType('careless')" data-mt="careless" class="mark-type-btn shrink-0 px-4 h-10 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-semibold transition-all">审题错误</button>
     </div>
-    <div class="mb-5">
-      <label class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">添加笔记（可选）</label>
-      <textarea id="markNoteInput" placeholder="记录你的思考过程或易错点..." class="w-full h-24 px-4 py-3 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm resize-none focus:border-primary-500 outline-none transition-colors"></textarea>
+    <div class="mb-5 mark-note-wrap">
+      <div class="flex items-center justify-between mb-2">
+        <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">添加笔记（可选）</label>
+        <!-- 三色笔记：选中后输入字体变为对应颜色，再点一次恢复默认黑色 -->
+        <div class="flex items-center gap-2.5">
+          <button onclick="_selectNoteColor('purple')" data-nc="purple" class="note-color-dot" style="background:#7c3aed;color:#7c3aed" title="紫色笔记"></button>
+          <button onclick="_selectNoteColor('blue')" data-nc="blue" class="note-color-dot" style="background:#2563eb;color:#2563eb" title="蓝色笔记"></button>
+          <button onclick="_selectNoteColor('red')" data-nc="red" class="note-color-dot" style="background:#dc2626;color:#dc2626" title="红色笔记"></button>
+        </div>
+      </div>
+      <div class="mark-note-box">
+        <textarea id="markNoteInput" placeholder="记录你的思考过程或易错点..." class="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm resize-none focus:border-primary-500 outline-none transition-colors"></textarea>
+        <div id="markNoteOverlay" class="mark-note-overlay" aria-hidden="true"></div>
+      </div>
     </div>
     <div class="sheet-btns">
       <button class="sheet-btn-cancel" onclick="hideMarkSheet()">取消</button>
@@ -945,8 +973,19 @@ tailwind.config = {
   <div class="sheet-sheet" onclick="event.stopPropagation()">
     <div class="sheet-handle"></div>
     <h3 class="sheet-title">我的笔记</h3>
-    <p class="sheet-msg" id="noteSheetSubtitle">编辑并保存你的笔记</p>
-    <textarea id="noteSheetInput" placeholder="记录你的思考过程或易错点..." class="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm resize-none focus:border-primary-500 outline-none transition-colors"></textarea>
+    <div class="flex items-center justify-between mb-3">
+      <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed" id="noteSheetSubtitle">编辑并保存你的笔记</p>
+      <!-- 三色笔记：选中后新输入文字变为对应颜色，再点一次恢复默认黑色 -->
+      <div class="flex items-center gap-2.5 shrink-0 ml-3">
+        <button onclick="_selectNoteEditColor('purple')" data-nec="purple" class="note-color-dot" style="background:#7c3aed;color:#7c3aed" title="紫色笔记"></button>
+        <button onclick="_selectNoteEditColor('blue')" data-nec="blue" class="note-color-dot" style="background:#2563eb;color:#2563eb" title="蓝色笔记"></button>
+        <button onclick="_selectNoteEditColor('red')" data-nec="red" class="note-color-dot" style="background:#dc2626;color:#dc2626" title="红色笔记"></button>
+      </div>
+    </div>
+    <div class="note-box">
+      <textarea id="noteSheetInput" placeholder="记录你的思考过程或易错点..." class="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm resize-none focus:border-primary-500 outline-none transition-colors"></textarea>
+      <div id="noteOverlay" class="mark-note-overlay" aria-hidden="true"></div>
+    </div>
     <div class="sheet-btns">
       <button class="sheet-btn-cancel" onclick="hideNoteSheet()">取消</button>
       <button class="sheet-btn-confirm" onclick="_saveNoteEdit()">保存笔记</button>
@@ -1031,8 +1070,8 @@ tailwind.config = {
   </div>
 </div>
 
-<!-- Toast -->
-<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-50 hidden">
+<!-- Toast（z-[200]：必须高于所有弹窗遮罩 sheet-mask z-100，否则提示会被弹窗盖住） -->
+<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-[200] hidden">
   <div class="px-5 py-3 rounded-2xl bg-gray-900/90 dark:bg-white/90 text-white dark:text-gray-900 text-sm font-semibold shadow-2xl"></div>
 </div>
 
@@ -25725,9 +25764,12 @@ function hideMockSheet(){
     mockSheet: () => hideMockSheet(),
     settingsSheet: () => hideSettingsSheet(),
     resumeSheet: () => hideResumeSheet(),
+    licSheet: () => hideLicSheet(),
     _sheetConfirm: () => _closeSheetConfirm(false)
   };
-  let sheet = null, startY = 0, dy = 0, lastY = 0, lastT = 0, vel = 0;
+  let sheet = null, startY = 0, dy = 0, lastY = 0, lastT = 0, vel = 0, baseH = 0;
+  // 支持上滑全屏的弹窗（其余弹窗上滑无响应）
+  const EXPANDABLE = { noteSheet: true, markSheet: true };
   const resetInline = (el, delay) => setTimeout(()=>{ el.style.transition=''; el.style.transform=''; }, delay);
   document.addEventListener('pointerdown', e=>{
     const handle = e.target.closest('.sheet-handle');
@@ -25735,34 +25777,69 @@ function hideMockSheet(){
     const s = handle.closest('.sheet-sheet');
     if(!s || !s.closest('.sheet-mask.open')) return;
     sheet = s; startY = e.clientY; lastY = e.clientY; lastT = performance.now(); dy = 0; vel = 0;
+    baseH = s.getBoundingClientRect().height;
     s.style.transition = 'none';
     try{ handle.setPointerCapture(e.pointerId); }catch(err){}
     e.preventDefault();
   });
   document.addEventListener('pointermove', e=>{
     if(!sheet) return;
-    dy = Math.max(0, e.clientY - startY);
+    dy = e.clientY - startY;
     const now = performance.now();
     if(now > lastT){ vel = (e.clientY - lastY) / (now - lastT); }
     lastY = e.clientY; lastT = now;
-    sheet.style.transform = `translateY(${dy}px)`;
+    const m = sheet.closest('.sheet-mask');
+    let tx = dy;
+    if(dy < 0){
+      // 上拖：用“加高”而非整体平移——顶部向上生长、底部始终贴住屏幕底边，不会露出下方页面
+      // 注意 dy 保留原始负值供松手时判定上滑幅度，tx 仅用于位移
+      if(EXPANDABLE[m && m.id]){
+        sheet.style.height = Math.min(baseH - dy, window.innerHeight) + 'px';
+      }
+      tx = 0;
+    }
+    sheet.style.transform = `translateY(${tx}px)`;
   });
   const endDrag = ()=>{
     if(!sheet) return;
     const s = sheet; sheet = null;
     const mask = s.closest('.sheet-mask');
-    const shouldClose = dy > 110 || (dy > 40 && vel > 0.6);
+    const id = mask ? mask.id : '';
+    const isFull = s.dataset.full === '1';
+    const swipeDown = dy > 110 || (dy > 40 && vel > 0.6);
+    const swipeUp = dy < -80 || (dy < -40 && vel < -0.6);
+    // 全屏状态下拖：下滑收回半屏（不关闭），上滑保持全屏
+    if(isFull){
+      s.style.transition = 'transform 0.28s cubic-bezier(0.32,0.72,0,1), height 0.28s ease';
+      s.style.transform = '';
+      if(swipeDown){ s.style.height = ''; delete s.dataset.full; }
+      setTimeout(()=>{ s.style.transition=''; }, 320);
+      return;
+    }
+    // 上滑展开为全屏
+    if(swipeUp && EXPANDABLE[id]){
+      s.style.transition = 'transform 0.28s cubic-bezier(0.32,0.72,0,1), height 0.28s ease';
+      s.style.transform = '';
+      s.style.height = '100vh';
+      s.dataset.full = '1';
+      setTimeout(()=>{ s.style.transition=''; }, 320);
+      return;
+    }
+    const shouldClose = swipeDown;
     s.style.transition = 'transform 0.28s cubic-bezier(0.32,0.72,0,1)';
     if(shouldClose){
       s.style.transform = 'translateY(105%)';
       setTimeout(()=>{
-        const fn = CLOSE_MAP[mask ? mask.id : ''];
+        const fn = CLOSE_MAP[id];
         if(fn) fn();
         resetInline(s, 360);
       }, 200);
     } else {
+      // 未达到展开/关闭阈值：高度与位移都带过渡回到原位
+      s.style.transition = 'transform 0.28s cubic-bezier(0.32,0.72,0,1), height 0.28s ease';
       s.style.transform = '';
-      resetInline(s, 300);
+      s.style.height = '';
+      setTimeout(()=>{ s.style.transition=''; }, 320);
     }
   };
   document.addEventListener('pointerup', endDrag);
@@ -26417,6 +26494,11 @@ function markWrong(){
     btn.classList.add('border-gray-200','dark:border-gray-700','text-gray-700','dark:text-gray-300');
   });
   document.getElementById('markNoteInput').value = '';
+    // 复位笔记输入（含逐字颜色）与三色选择（默认黑色）
+    if(!_markColorTA) _markColorTA = _initColorTA('markNoteInput', 'markNoteOverlay');
+    _markColorTA.reset();
+    _markNoteColor = '';
+    document.querySelectorAll('#markSheet .note-color-dot').forEach(b=>b.classList.remove('nc-on'));
   mask.classList.remove('hidden');
   requestAnimationFrame(()=>mask.classList.add('open'));
 }
@@ -26425,6 +26507,9 @@ function hideMarkSheet(){
   const mask = document.getElementById('markSheet');
   mask.classList.remove('open');
   setTimeout(()=>mask.classList.add('hidden'), 320);
+  // 复位全屏展开状态，下次打开仍从 62vh 高度开始
+  const s = mask.querySelector('.sheet-sheet');
+  if(s){ s.style.height = ''; s.style.transform = ''; s.style.transition = ''; delete s.dataset.full; }
 }
 
 function _selectMarkType(type){
@@ -26445,13 +26530,109 @@ function _selectMarkType(type){
 
 let _markTargetQ = null;
 let _markSelectedType = null;
+// 三色笔记：''=默认黑色；切换颜色只影响之后新输入的文字，颜色逐字随笔记保存
+let _markNoteColor = '';
+const _NOTE_COLORS = { purple:'#7c3aed', blue:'#2563eb', red:'#dc2626' };
+let _markColorTA = null, _noteColorTA = null;
+
+/* 彩色输入框：输入框负责打字，叠加层逐字渲染颜色。
+   通过前后值 diff 定位新增字符，新增字符记入当时选中的颜色 */
+function _initColorTA(taId, ovId){
+  const ta = document.getElementById(taId), ov = document.getElementById(ovId);
+  if(!ta || !ov) return null;
+  const st = { colors: [], prev: ta.value, cur: '' };
+  const render = ()=>{
+    const v = ta.value;
+    let html = '', i = 0;
+    while(i < v.length){
+      const c = st.colors[i] || '';
+      let j = i + 1;
+      while(j < v.length && (st.colors[j]||'') === c) j++;
+      const seg = _escape(v.slice(i, j));
+      html += c ? '<span style="color:' + c + '">' + seg + '</span>' : seg;
+      i = j;
+    }
+    if(v.charAt(v.length - 1) === '\n') html += '<br>';
+    ov.innerHTML = html;
+    ov.scrollTop = ta.scrollTop;
+  };
+  const sync = ()=>{
+    const v = ta.value, old = st.prev;
+    if(v !== old){
+      const minL = Math.min(v.length, old.length);
+      let p = 0;
+      while(p < minL && v[p] === old[p]) p++;
+      let s = 0;
+      while(s < minL - p && v[v.length-1-s] === old[old.length-1-s]) s++;
+      const mid = [];
+      for(let k = 0, n = v.length - p - s; k < n; k++) mid.push(st.cur);
+      st.colors = st.colors.slice(0, p).concat(mid).concat(st.colors.slice(old.length - s));
+      st.prev = v;
+    }
+    render();
+  };
+  ta.addEventListener('input', sync);
+  ta.addEventListener('scroll', ()=>{ ov.scrollTop = ta.scrollTop; });
+  render();
+  return {
+    load(text, colors){ ta.value = text || ''; st.prev = ta.value; st.cur = ''; st.colors = (colors || []).slice(0, ta.value.length); while(st.colors.length < ta.value.length) st.colors.push(''); render(); },
+    setColor(c){ st.cur = c || ''; },
+    getData(){ return { text: ta.value, colors: st.colors }; },
+    reset(){ ta.value = ''; st.prev = ''; st.colors = []; st.cur = ''; render(); }
+  };
+}
+
+function _selectNoteColor(c){
+  // 再点一次已选颜色 = 取消选择，恢复默认黑色；只改后续新输入文字的颜色
+  _markNoteColor = (_markNoteColor === c) ? '' : c;
+  if(_markColorTA) _markColorTA.setColor(_NOTE_COLORS[_markNoteColor] || '');
+  document.querySelectorAll('#markSheet .note-color-dot').forEach(b=>{
+    b.classList.toggle('nc-on', b.dataset.nc === _markNoteColor);
+  });
+}
+
+// 「我的笔记」编辑弹窗的三色选择（逻辑同上，只影响新输入文字）
+let _noteEditColor = '';
+function _selectNoteEditColor(c){
+  _noteEditColor = (_noteEditColor === c) ? '' : c;
+  if(_noteColorTA) _noteColorTA.setColor(_NOTE_COLORS[_noteEditColor] || '');
+  document.querySelectorAll('#noteSheet .note-color-dot').forEach(b=>{
+    b.classList.toggle('nc-on', b.dataset.nec === _noteEditColor);
+  });
+}
+
+// 去掉首尾空白时同步裁剪逐字颜色数组
+function _trimNoteData(d){
+  const note = d.text.trim();
+  const lead = d.text.length - d.text.trimStart().length;
+  return { note: note, colors: d.colors.slice(lead, lead + note.length) };
+}
 
 function _confirmMarkMistake(){
   if(!_markSelectedType){ toast('请选择错误类型'); return; }
-  const note = document.getElementById('markNoteInput').value.trim();
-  autoAddMistake(_markTargetQ, _markSelectedType, note);
+  const d = _markColorTA ? _markColorTA.getData() : { text: document.getElementById('markNoteInput').value, colors: [] };
+  const t = _trimNoteData(d);
+  autoAddMistake(_markTargetQ, _markSelectedType, t.note, t.colors);
   hideMarkSheet();
   toast('已标记为易错');
+}
+
+// 错题卡片笔记预览：逐字颜色渲染（兼容旧数据的单色 noteColor 字段）
+function _notePreviewHTML(m){
+  const n = Math.min(30, m.note.length);
+  let cols = (m.noteColors && m.noteColors.length) ? m.noteColors : null;
+  if(!cols && m.noteColor && _NOTE_COLORS[m.noteColor]) cols = Array(m.note.length).fill(_NOTE_COLORS[m.noteColor]);
+  if(!cols) return _escape(m.note.slice(0, 30)) + (m.note.length > 30 ? '…' : '');
+  let html = '', i = 0;
+  while(i < n){
+    const c = cols[i] || '';
+    let j = i + 1;
+    while(j < n && (cols[j]||'') === c) j++;
+    const seg = _escape(m.note.slice(i, j));
+    html += c ? '<span style="color:' + c + '">' + seg + '</span>' : seg;
+    i = j;
+  }
+  return html + (m.note.length > 30 ? '…' : '');
 }
 
 let _noteEditQid = null;
@@ -26460,13 +26641,23 @@ function hideNoteSheet(){
   const mask = document.getElementById('noteSheet');
   mask.classList.remove('open');
   setTimeout(()=>mask.classList.add('hidden'), 320);
+  // 复位全屏展开状态，下次打开仍从半屏开始
+  const s = mask.querySelector('.sheet-sheet');
+  if(s){ s.style.height = ''; s.style.transform = ''; s.style.transition = ''; delete s.dataset.full; }
 }
 
 function showNote(qid){
   const m = STATE.store.mistakes.find(x=>x.qid===qid);
   if(!m){ toast('该题不在错题本中'); return; }
   _noteEditQid = qid;
-  document.getElementById('noteSheetInput').value = m.note || '';
+  if(!_noteColorTA) _noteColorTA = _initColorTA('noteSheetInput', 'noteOverlay');
+  // 逐字颜色回显；旧数据只有单色 noteColor 时展开为整段同色
+  let _cols = (m.noteColors && m.noteColors.length) ? m.noteColors : null;
+  if(!_cols && m.noteColor && _NOTE_COLORS[m.noteColor]) _cols = Array((m.note||'').length).fill(_NOTE_COLORS[m.noteColor]);
+  _noteColorTA.load(m.note || '', _cols || []);
+  // 复位三色选择（默认黑色，新输入文字用默认色）
+  _noteEditColor = '';
+  document.querySelectorAll('#noteSheet .note-color-dot').forEach(b=>b.classList.remove('nc-on'));
   document.getElementById('noteSheetSubtitle').textContent = m.note ? '编辑并保存你的笔记' : '添加你的笔记';
   const mask = document.getElementById('noteSheet');
   mask.classList.remove('hidden');
@@ -26475,10 +26666,12 @@ function showNote(qid){
 
 function _saveNoteEdit(){
   if(!_noteEditQid) return hideNoteSheet();
-  const note = document.getElementById('noteSheetInput').value.trim();
+  const d = _noteColorTA ? _noteColorTA.getData() : { text: document.getElementById('noteSheetInput').value, colors: [] };
+  const t = _trimNoteData(d);
   const m = STATE.store.mistakes.find(x=>x.qid===_noteEditQid);
   if(m){
-    m.note = note;
+    m.note = t.note;
+    m.noteColors = t.colors;
     saveStore();
     renderMistakes();
   }
@@ -26509,17 +26702,18 @@ function recordAnswer(q, correct){
   saveStore();
 }
 
-function autoAddMistake(q, reason, note){
+function autoAddMistake(q, reason, note, noteColors){
   const s = STATE.store;
   const existing = s.mistakes.find(m=>m.qid===q.id);
   if(existing){
     if(reason) existing.reason = reason;
     if(note!==undefined) existing.note = note;
+    if(noteColors!==undefined) existing.noteColors = noteColors;
     existing.at = Date.now();
     saveStore();
     return;
   }
-  s.mistakes.push({qid:q.id, subj:q.subj, at:Date.now(), reason:reason||'concept', note:note||''});
+  s.mistakes.push({qid:q.id, subj:q.subj, at:Date.now(), reason:reason||'concept', note:note||'', noteColors:noteColors||[]});
   saveStore();
 }
 
@@ -26583,7 +26777,7 @@ function renderMistakes(forceFilter){
             <span class="chip px-2 py-0.5 rounded-full text-[10px]" style="background:rgba(239,68,68,0.1);color:#dc2626">答案：${ans||'?'}</span>
           </div>
           <p class="text-sm leading-relaxed text-gray-700 dark:text-gray-200">${_escape(preview)}${q.stem.length>60?'…':''}</p>
-          ${hasNote ? `<div class="mt-2 flex items-center gap-1 text-xs text-primary-600 dark:text-primary-300"><svg viewBox="0 0 1024 1024" width="14" height="14" fill="currentColor"><path d="M828.974545 544.581818l-301.14909 300.497455-31.418182 119.016727H94.347636a67.025455 67.025455 0 0 1-67.025454-67.025455V106.449455c0-37.003636 30.021818-67.025455 67.025454-67.025455h667.648c37.003636 0 67.025455 30.021818 67.025455 67.025455V544.581818z m17.687273 51.898182l98.722909 98.722909-256.698182 256.744727-98.722909-98.769454 256.698182-256.698182z m100.398546-60.928l59.252363 59.252364a27.927273 27.927273 0 0 1 0 39.517091l-39.424 39.424-98.769454-98.72291 39.470545-39.470545a27.927273 27.927273 0 0 1 39.470546 0z m-410.856728 470.109091l33.745455-132.468364 98.769454 98.722909-132.514909 33.792zM173.102545 315.904a34.909091 34.909091 0 1 0 0 69.818182H693.061818a34.909091 34.909091 0 1 0 0-69.818182H173.149091z m0 186.181818a34.909091 34.909091 0 1 0 0 69.818182h333.777455a34.909091 34.909091 0 0 0 0-69.818182H173.149091z"/></svg><span class="truncate">${_escape(m.note.slice(0,30))}${m.note.length>30?'…':''}</span></div>` : ''}
+          ${hasNote ? `<div class="mt-2 flex items-center gap-1 text-xs text-primary-600 dark:text-primary-300"><svg viewBox="0 0 1024 1024" width="14" height="14" fill="currentColor"><path d="M828.974545 544.581818l-301.14909 300.497455-31.418182 119.016727H94.347636a67.025455 67.025455 0 0 1-67.025454-67.025455V106.449455c0-37.003636 30.021818-67.025455 67.025454-67.025455h667.648c37.003636 0 67.025455 30.021818 67.025455 67.025455V544.581818z m17.687273 51.898182l98.722909 98.722909-256.698182 256.744727-98.722909-98.769454 256.698182-256.698182z m100.398546-60.928l59.252363 59.252364a27.927273 27.927273 0 0 1 0 39.517091l-39.424 39.424-98.769454-98.72291 39.470545-39.470545a27.927273 27.927273 0 0 1 39.470546 0z m-410.856728 470.109091l33.745455-132.468364 98.769454 98.722909-132.514909 33.792zM173.102545 315.904a34.909091 34.909091 0 1 0 0 69.818182H693.061818a34.909091 34.909091 0 1 0 0-69.818182H173.149091z m0 186.181818a34.909091 34.909091 0 1 0 0 69.818182h333.777455a34.909091 34.909091 0 0 0 0-69.818182H173.149091z"/></svg><span class="truncate">${_notePreviewHTML(m)}</span></div>` : ''}
         </div>
         <div class="flex flex-col items-center gap-2 shrink-0">
           <button class="w-7 h-7 flex items-center justify-center text-gray-400/70" onclick="event.stopPropagation();removeMistake('${m.qid}')"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
@@ -26963,6 +27157,13 @@ function _renderLicSection(){
       + '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300">未激活</span>'
       + '</div>'
       + (st.reason ? '<p class="mt-1.5 text-xs text-red-500">' + st.reason + '</p>' : '')
+      + '<div class="mt-2.5 rounded-xl bg-white dark:bg-gray-700 p-3">'
+      + '<p class="text-[11px] text-gray-400 dark:text-gray-500 mb-1.5">本机机器码（获取密钥时提供给开发者）</p>'
+      + '<div class="flex items-center gap-2">'
+      + '<code class="flex-1 min-w-0 text-[11px] text-gray-700 dark:text-gray-200 break-all leading-relaxed">' + _licMachineCode() + '</code>'
+      + '<button onclick="_licCopyMachine()" class="shrink-0 px-3 py-2 rounded-lg text-[11px] font-bold text-white active:scale-95 transition-transform" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6)">复制</button>'
+      + '</div>'
+      + '</div>'
       + '<input id="licKeyInputSheet" type="text" placeholder="请输入授权密钥" class="mt-2.5 w-full rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 text-sm text-gray-800 dark:text-gray-100 outline-none focus:border-purple-400 transition-colors">'
       + '<p id="licErrMsgSheet" class="mt-1.5 text-xs text-red-500 min-h-[14px]"></p>'
       + '<button onclick="_licDoActivate(\'licKeyInputSheet\')" class="w-full py-2.5 rounded-xl text-white text-sm font-bold active:scale-[0.97] transition-transform" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6)">激活</button>'

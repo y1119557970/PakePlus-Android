@@ -297,45 +297,56 @@ tailwind.config = {
     background: linear-gradient(135deg, #f59e0b, #ef4444);
     box-shadow: 0 14px 34px -8px rgba(239,68,68,0.5), inset 0 -4px 0 rgba(0,0,0,0.12);
   }
-  /* label below node */
-  .level-label {
+  /* 通关节点环绕弧线（星数表现：一颗星点亮一段，呼吸展开收起） */
+  .lv-ring {
     position: absolute;
-    transform: translate(-50%, 0);
-    font-size: 10px;
-    font-weight: 600;
-    color: #6b7280;
-    text-align: center;
-    max-width: 110px;
-    line-height: 1.2;
+    width: 100px; height: 100px;
+    transform: translate(-50%,-50%);
     pointer-events: none;
-    white-space: normal;
+    z-index: 1;
+    animation: lvRingBreath 2.6s ease-in-out infinite;
   }
-  .dark .level-label { color: #9ca3af; }
-  .level-label.lv-cur { color: #7c3aed; }
-  .dark .level-label.lv-cur { color: #c4b5fd; }
-  /* 小勋章(完成度星标) */
-  .level-stars {
+  .lv-ring svg { width: 100%; height: 100%; }
+  @keyframes lvRingBreath {
+    0%, 100% { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+    50% { transform: translate(-50%,-50%) scale(1.04); opacity: 0.85; }
+  }
+  /* 关卡点击气泡弹窗 */
+  .level-pop {
     position: absolute;
-    transform: translate(-50%, 0);
-    font-size: 11px;
-    color: #fbbf24;
-    letter-spacing: 0.5px;
-    pointer-events: none;
+    z-index: 30;
+    width: 216px;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 12px 32px -6px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.06);
+    padding: 14px 14px 12px;
+    transform-origin: top center;
+    animation: lvPopIn 0.2s ease both;
   }
-  /* 关卡外章节大阶段分割标签 */
-  .level-chapter-badge {
-    position: absolute;
-    transform: translate(-50%, -50%);
-    padding: 4px 12px;
-    border-radius: 999px;
-    background: rgba(139,92,246,0.12);
-    color: #7c3aed;
-    font-size: 10px;
-    font-weight: 700;
-    white-space: nowrap;
+  .dark .level-pop { background: #1f2937; }
+  .level-pop-arrow {
+    position: absolute; top: -7px;
+    width: 14px; height: 14px;
+    background: inherit;
+    transform: rotate(45deg);
+    border-radius: 3px;
   }
-  .dark .level-chapter-badge { background: rgba(167,139,250,0.15); color: #c4b5fd; }
-
+  .level-pop-title { font-size: 14px; font-weight: 700; text-align: center; line-height: 1.35; word-break: break-all; }
+  .level-pop-sub { font-size: 11px; color: #6b7280; text-align: center; margin-top: 2px; }
+  .dark .level-pop-sub { color: #9ca3af; }
+  .level-pop-btn {
+    display: block; width: 100%; margin-top: 10px;
+    height: 40px; border: none; border-radius: 999px;
+    background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+    color: #fff; font-weight: 700; font-size: 14px;
+    cursor: pointer; transition: transform 0.15s ease;
+    box-shadow: 0 6px 16px -6px rgba(124,58,237,0.55);
+  }
+  .level-pop-btn:active { transform: scale(0.96); }
+  @keyframes lvPopIn {
+    from { opacity: 0; transform: scale(0.85) translateY(-6px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
   /* ============ 目标设置模态框 ============ */
   .goal-mask { position: fixed; inset: 0; background: rgba(17,24,39,0.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 100; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
   .goal-mask.open { opacity: 1; pointer-events: auto; }
@@ -985,6 +996,8 @@ tailwind.config = {
     <div class="sheet-handle"></div>
     <h3 class="sheet-title">设置</h3>
     <p class="sheet-msg">数据管理：建议定期备份刷题数据，更换设备或清理缓存前可一键恢复。</p>
+    <!-- 激活状态区（JS 动态渲染：已激活显示状态/未激活显示密钥输入） -->
+    <div id="licSection" class="mb-4"></div>
     <div class="flex gap-3">
       <button onclick="exportData()" class="flex-1 py-3.5 rounded-2xl text-sm font-bold bg-primary-50 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 border-2 border-primary-200 dark:border-purple-800/50 shadow-sm active:scale-[0.97] transition-all">⬇ 备份数据</button>
       <button onclick="document.getElementById('importFile').click()" class="flex-1 py-3.5 rounded-2xl text-sm font-bold bg-primary-50 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 border-2 border-primary-200 dark:border-purple-800/50 shadow-sm active:scale-[0.97] transition-all">⬆ 恢复数据</button>
@@ -992,6 +1005,28 @@ tailwind.config = {
     </div>
     <div class="sheet-btns">
       <button class="sheet-btn-cancel" onclick="hideSettingsSheet()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 激活底部弹窗（未激活时进入答题触发） -->
+<div id="licSheet" class="sheet-mask hidden" onclick="hideLicSheet()">
+  <div class="sheet-sheet" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <h3 class="sheet-title">🔑 激活后解锁刷题</h3>
+    <p class="sheet-msg">应用尚未激活，请输入授权密钥继续使用。密钥与本机设备绑定，获取密钥时请提供下方机器码。</p>
+    <div class="rounded-2xl bg-primary-50/70 dark:bg-primary-900/30 p-4">
+      <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">本机机器码</p>
+      <div class="flex items-center gap-2">
+        <code id="licMachineCode" class="flex-1 bg-white dark:bg-gray-700 rounded-xl px-3 py-2.5 text-[11px] text-gray-700 dark:text-gray-200 break-all leading-relaxed"></code>
+        <button onclick="_licCopyMachine()" class="shrink-0 px-3.5 py-2.5 rounded-xl text-xs font-bold text-white active:scale-95 transition-transform" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6)">复制</button>
+      </div>
+    </div>
+    <input id="licKeyInput" type="text" placeholder="请粘贴授权密钥" class="mt-3 w-full rounded-2xl border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-3 text-sm text-gray-800 dark:text-gray-100 outline-none focus:border-purple-400 transition-colors">
+    <p id="licErrMsg" class="mt-2 text-xs text-red-500 min-h-[16px] text-center"></p>
+    <div class="sheet-btns">
+      <button class="sheet-btn-cancel" onclick="hideLicSheet()">取消</button>
+      <button class="sheet-btn-confirm" onclick="_licActivateFromGate()">激活</button>
     </div>
   </div>
 </div>
@@ -25234,7 +25269,8 @@ function _hideTopOverlay(){
     ['markSheet', hideMarkSheet],
     ['noteSheet', hideNoteSheet],
     ['mockSheet', hideMockSheet],
-    ['settingsSheet', hideSettingsSheet]
+    ['settingsSheet', hideSettingsSheet],
+    ['licSheet', hideLicSheet]
   ];
   for(const p of pairs){
     const el = document.getElementById(p[0]);
@@ -25559,6 +25595,7 @@ function _activePageId(){ const el = document.querySelector('.page.active'); ret
 let _quizReturnPage = 'page-home'; // 进入答题前的来源页，退出时返回该页
 function _beginQuiz(list, label, opts){
   opts = opts || {};
+  if(!_licEnsure(()=>_beginQuiz(list, label, opts))) return;
   if(!list.length){ toast('没有可刷的题目'); return; }
   _quizLive = true;
   _quizReturnPage = opts.returnPage || _activePageId();
@@ -25585,6 +25622,7 @@ function _beginQuiz(list, label, opts){
   if(PROGRESS_MODES.has(STATE.quiz.mode)) _saveQuizProgress();
 }
 function startMode(mode){
+  if(!_licEnsure(()=>startMode(mode))) return;
   const s = STATE.current_subject;
   // 考点精刷/真题专项：存在未完成进度时，先弹窗选择继续或重置
   if((mode==='focus' || mode==='real') && !_resumeDecision){
@@ -25660,6 +25698,7 @@ function showMockSheet(){
 function showSettingsSheet(){
   const mask = document.getElementById('settingsSheet');
   if(!mask) return;
+  _renderLicSection();
   mask.classList.remove('hidden');
   requestAnimationFrame(()=>mask.classList.add('open'));
 }
@@ -25821,6 +25860,7 @@ function renderLevelPage(){
   });
   let curIdx = prog.findIndex(p=>p.done < p.total);
   if(curIdx < 0) curIdx = prog.length - 1;
+  _levelProg = prog; _levelCurIdx = curIdx;
   const cur = prog[curIdx];
   document.getElementById('levelStageTitle').textContent = '当前进度 · 第' + (curIdx+1) + ' / ' + prog.length + '章';
   document.getElementById('levelStageSub').textContent = cur.ch.name;
@@ -25844,6 +25884,8 @@ function renderLevelPage(){
     x: W/2 + Math.sin(i * 0.95) * amp,
     y: TOP + i * V,
   }));
+  _levelPts = pts;
+  _levelNodeEls = [];
   let d = '';
   pts.forEach((pt, i)=>{ d += (i ? 'L' : 'M') + pt.x.toFixed(1) + ' ' + pt.y.toFixed(1) + ' '; });
   svg.innerHTML = '<path d="' + d + '" fill="none" stroke="rgba(139,92,246,0.30)" stroke-width="4" stroke-dasharray="2 9" stroke-linecap="round"/>';
@@ -25854,46 +25896,151 @@ function renderLevelPage(){
     node.className = 'level-node ' + (state==='done' ? 'lv-completed' : state==='cur' ? 'lv-current' : 'lv-locked');
     node.style.left = pt.x + 'px';
     node.style.top = pt.y + 'px';
-    node.textContent = state==='done' ? '✓' : state==='cur' ? String(i+1) : String(i+1);
+    node.textContent = String(i+1);
     node.title = p.ch.name;
+    _levelNodeEls[i] = node;
     if(state === 'locked'){
       node.onclick = ()=>{
+        _closeLevelPop();
         // 清除其他选中
         wrapEl.querySelectorAll('.level-node.lv-selected').forEach(n=>n.classList.remove('lv-selected'));
         node.classList.add('lv-selected');
         // 显示当前关卡信息
-        document.getElementById('levelStageTitle').textContent = '未解锁 · 第' + (i+1) + ' / ' + prog.length + '章';
-        document.getElementById('levelStageSub').textContent = p.ch.name + '（通关前一章后解锁）';
-        document.getElementById('levelStageProgress').style.width = '0%';
-        document.getElementById('levelStagePercent').textContent = '0%';
+        _updateLevelStage(i, p, prog.length, 'locked');
       };
     } else {
-      node.onclick = ()=>{
+      node.onclick = (e)=>{
+        e.stopPropagation();
         wrapEl.querySelectorAll('.level-node.lv-selected').forEach(n=>n.classList.remove('lv-selected'));
-        startLevelChapter(i);
+        // 顶部卡片同步显示该关卡信息
+        _updateLevelStage(i, p, prog.length, state);
+        _toggleLevelPop(i, p, pt, state, W);
       };
     }
     wrapEl.appendChild(node);
-    // 星标（已完成章节按正确率）
+    // 通关星数：圆圈周边三段断开环绕线，按正确率点亮（呼吸动效见 CSS）
     if(state === 'done'){
-      const stars = document.createElement('div');
-      stars.className = 'level-stars';
-      stars.style.left = pt.x + 'px';
-      stars.style.top = (pt.y - 56) + 'px';
       const acc = p.done ? p.right / p.done : 0;
-      stars.textContent = acc >= 0.8 ? '★★★' : acc >= 0.6 ? '★★☆' : '★☆☆';
-      wrapEl.appendChild(stars);
+      const starN = acc >= 0.8 ? 3 : acc >= 0.6 ? 2 : 1;
+      const ring = document.createElement('div');
+      ring.className = 'lv-ring';
+      ring.style.left = pt.x + 'px';
+      ring.style.top = pt.y + 'px';
+      ring.style.animationDelay = (i % 3) * 0.4 + 's';
+      ring.innerHTML = _levelRingSvg(starN);
+      wrapEl.appendChild(ring);
     }
-    const label = document.createElement('div');
-    label.className = 'level-label' + (state==='cur' ? ' lv-cur' : '');
-    label.style.left = pt.x + 'px';
-    label.style.top = (pt.y + 44) + 'px';
-    let nm = p.ch.name.replace(/^第[一二三四五六七八九十百0-9]+章\s*/, '');
-    if(nm.length > 12) nm = nm.slice(0, 12) + '…';
-    label.textContent = nm;
-    wrapEl.appendChild(label);
   });
 }
+
+/* 通关节点环绕弧线 SVG：三段断开弧线，点亮 starN 段（右→下→左） */
+function _levelArcPath(cx, cy, r, a0, a1){
+  const rad = a => a * Math.PI / 180;
+  const x0 = cx + r * Math.cos(rad(a0)), y0 = cy + r * Math.sin(rad(a0));
+  const x1 = cx + r * Math.cos(rad(a1)), y1 = cy + r * Math.sin(rad(a1));
+  return 'M' + x0.toFixed(2) + ' ' + y0.toFixed(2) + ' A' + r + ' ' + r + ' 0 0 1 ' + x1.toFixed(2) + ' ' + y1.toFixed(2);
+}
+function _levelRingSvg(starN){
+  // 缺口中心：正上/右下/左下，每段弧约 96°
+  const arcs = [[282, 378], [42, 138], [162, 258]];
+  let paths = '';
+  arcs.forEach((a, idx)=>{
+    const lit = idx < starN;
+    paths += '<path d="' + _levelArcPath(50, 50, 46, a[0], a[1]) + '" fill="none" stroke="' + (lit ? '#8b5cf6' : 'rgba(139,92,246,0.18)') + '" stroke-width="8" stroke-linecap="round"/>';
+  });
+  return '<svg viewBox="0 0 100 100">' + paths + '</svg>';
+}
+
+/* 顶部进度卡片：根据点击的关卡同步显示对应信息 */
+let _levelProg = null, _levelCurIdx = 0;
+// 弹窗点击穿透转发用：节点坐标与元素引用
+let _levelPts = [], _levelNodeEls = [];
+function _updateLevelStage(i, p, total, state){
+  const title = document.getElementById('levelStageTitle');
+  const sub = document.getElementById('levelStageSub');
+  const bar = document.getElementById('levelStageProgress');
+  const pctEl = document.getElementById('levelStagePercent');
+  if(state === 'locked'){
+    title.textContent = '未解锁 · 第' + (i+1) + ' / ' + total + '章';
+    sub.textContent = p.ch.name + '（通关前一章后解锁）';
+    bar.style.width = '0%';
+    pctEl.textContent = '0%';
+    return;
+  }
+  const pct = Math.round(p.done * 100 / Math.max(1, p.total));
+  if(state === 'done'){
+    title.textContent = '已通关 · 第' + (i+1) + ' / ' + total + '章';
+    const acc = p.done ? Math.round(p.right * 100 / p.done) : 0;
+    sub.textContent = p.ch.name + ' · 正确率 ' + acc + '%';
+  } else {
+    title.textContent = '当前进度 · 第' + (i+1) + ' / ' + total + '章';
+    sub.textContent = p.ch.name + ' · 已答 ' + p.done + '/' + p.total + ' 题';
+  }
+  bar.style.width = pct + '%';
+  pctEl.textContent = pct + '%';
+}
+// 关闭弹窗后恢复为当前进度章节（与页面初始展示一致）
+function _resetLevelStage(){
+  if(!_levelProg) return;
+  const p = _levelProg[_levelCurIdx];
+  const pct = Math.round(p.done * 100 / Math.max(1, p.total));
+  document.getElementById('levelStageTitle').textContent = '当前进度 · 第' + (_levelCurIdx+1) + ' / ' + _levelProg.length + '章';
+  document.getElementById('levelStageSub').textContent = p.ch.name;
+  document.getElementById('levelStageProgress').style.width = pct + '%';
+  document.getElementById('levelStagePercent').textContent = pct + '%';
+}
+
+/* 关卡点击气泡弹窗：圆圈下方弹出章节信息 + 开始闯关按钮 */
+let _levelPopIdx = -1;
+function _closeLevelPop(){
+  const el = document.getElementById('levelPop');
+  if(el) el.remove();
+  _levelPopIdx = -1;
+}
+function _toggleLevelPop(i, p, pt, state, W){
+  if(_levelPopIdx === i){ _closeLevelPop(); return; }
+  _closeLevelPop();
+  _levelPopIdx = i;
+  const wrapEl = document.getElementById('levelNodes');
+  const pop = document.createElement('div');
+  pop.id = 'levelPop';
+  pop.className = 'level-pop';
+  pop.onclick = (e)=>{
+    // 点击穿透：若点击位置落在其他关卡圆圈区域内，转发给该关卡，避免弹窗遮挡导致下方节点无法点击
+    const rect = wrapEl.getBoundingClientRect();
+    const cx = e.clientX - rect.left, cy = e.clientY - rect.top;
+    for(let j = 0; j < _levelPts.length; j++){
+      if(j === i) continue;
+      const dx = cx - _levelPts[j].x, dy = cy - _levelPts[j].y;
+      if(dx*dx + dy*dy <= 45*45){
+        _closeLevelPop();
+        const el = _levelNodeEls[j];
+        if(el && el.onclick) el.onclick({ stopPropagation(){} });
+        return;
+      }
+    }
+    e.stopPropagation();
+  };
+  const acc = p.done ? Math.round(p.right * 100 / p.done) : 0;
+  const sub = state === 'done'
+    ? '第' + (i+1) + '章 · 已通关 · 正确率 ' + acc + '%'
+    : '第' + (i+1) + '章 · 已答 ' + p.done + '/' + p.total + ' 题';
+  const left = Math.max(6, Math.min(pt.x - 108, W - 222));
+  pop.style.left = left + 'px';
+  pop.style.top = (pt.y + 62) + 'px';
+  pop.innerHTML = '<div class="level-pop-arrow" style="left:' + Math.max(14, Math.min(pt.x - left - 7, 188)) + 'px"></div>'
+    + '<p class="level-pop-title">' + _escape(p.ch.name) + '</p>'
+    + '<p class="level-pop-sub">' + sub + '</p>'
+    + '<button class="level-pop-btn" onclick="startLevelChapter(' + i + ')">开始闯关</button>';
+  wrapEl.appendChild(pop);
+}
+// 点击地图外区域关闭关卡弹窗
+document.addEventListener('click', (e)=>{
+  if(_levelPopIdx < 0) return;
+  if(e.target.closest('#levelPop') || e.target.closest('.level-node')) return;
+  _closeLevelPop();
+  _resetLevelStage();
+});
 
 /* =========================================================
    题型专攻页（page-type）
@@ -25943,6 +26090,7 @@ function renderTypePage(){
   });
 }
 function startTypeQuiz(t){
+  if(!_licEnsure(()=>startTypeQuiz(t))) return;
   const s = STATE.current_subject;
   const qs = bankOf(s).filter(q=>q.type===t);
   if(!qs.length){ toast('该题型暂无题目'); return; }
@@ -26446,6 +26594,7 @@ function renderMistakes(forceFilter){
   });
 }
 function startFromMistake(qid){
+  if(!_licEnsure(()=>startFromMistake(qid))) return;
   const s = STATE.current_subject;
   const all = bankOf(s);
   const pos = all.findIndex(q=>q.id===qid);
@@ -26514,6 +26663,7 @@ function finishMock(){
   showPage('page-mock-result');
 }
 function reviewMock(){
+  if(!_licEnsure(()=>reviewMock())) return;
   if(!STATE.quiz.mockWrong.length){ toast('🎉 本次模考全部正确'); showPage('page-home'); return; }
   const s = STATE.current_subject;
   const wrongList = STATE.quiz.mockWrong.map(w => STATE.quiz.list[w.qidx]).filter(Boolean);
@@ -26691,6 +26841,141 @@ function importData(e){
 }
 
 /* =========================================================
+   授权激活（机器码绑定 + 有效期校验，逻辑与 license-check.js 一致）
+   ========================================================= */
+const _LIC_SECRET = 'y1119557970s17628196973c19980215';
+const _LIC_STORE = 'my_app_license_key';
+// 生成机器码（canvas 指纹，与原脚本一致，保证已生成密钥通用）
+function _licMachineCode(){
+  try{
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.fillText('unique-device-id', 0, 0);
+    return btoa(canvas.toDataURL()).slice(-32);
+  }catch(err){
+    return 'fallback_' + Math.random().toString(36).substring(2, 10);
+  }
+}
+const _licCrypto = {
+  encrypt(text){ let s=''; for(let i=0;i<text.length;i++){ s+=String.fromCharCode(text.charCodeAt(i)+_LIC_SECRET.charCodeAt(i%_LIC_SECRET.length)); } return btoa(s); },
+  decrypt(enc){ const raw = atob(enc); let s=''; for(let i=0;i<raw.length;i++){ s+=String.fromCharCode(raw.charCodeAt(i)-_LIC_SECRET.charCodeAt(i%_LIC_SECRET.length)); } return s; }
+};
+// 验证密钥：解密后为 机器码|到期时间戳
+function _licVerify(key, machineCode){
+  try{
+    const parts = _licCrypto.decrypt(key).split('|');
+    const expire = parseInt(parts[1]);
+    if(parts[0] !== machineCode) return { valid:false, reason:'密钥与本机设备不匹配（仅可在绑定设备使用）' };
+    if(Date.now() > expire) return { valid:false, reason:'密钥已过期（有效期至：' + new Date(expire).toLocaleString() + '）' };
+    return { valid:true, expireTime:expire };
+  }catch(err){
+    return { valid:false, reason:'密钥格式错误或无效，请检查后重新输入' };
+  }
+}
+function _licStatus(){
+  const key = localStorage.getItem(_LIC_STORE);
+  if(!key) return { active:false };
+  const res = _licVerify(key, _licMachineCode());
+  return res.valid ? { active:true, expireTime:res.expireTime } : { active:false, reason:res.reason };
+}
+function _licCopyMachine(){
+  const mc = _licMachineCode();
+  const done = ()=>toast('机器码已复制');
+  const fallback = ()=>{
+    const t = document.createElement('textarea');
+    t.value = mc; t.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(t); t.select();
+    try{ document.execCommand('copy'); done(); }catch(e){ toast('复制失败，请手动长按复制'); }
+    t.remove();
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(mc).then(done).catch(fallback);
+  } else fallback();
+}
+// 激活入口：答题拦截弹窗/设置面板共用
+let _licPending = null;
+function showLicSheet(pendingFn){
+  _licPending = pendingFn || null;
+  const errEl = document.getElementById('licErrMsg');
+  if(errEl) errEl.textContent = '';
+  const input = document.getElementById('licKeyInput');
+  if(input) input.value = '';
+  const mask = document.getElementById('licSheet');
+  if(!mask) return;
+  mask.classList.remove('hidden');
+  requestAnimationFrame(()=>mask.classList.add('open'));
+}
+function hideLicSheet(){
+  const mask = document.getElementById('licSheet');
+  if(!mask) return;
+  mask.classList.remove('open');
+  setTimeout(()=>mask.classList.add('hidden'), 320);
+}
+// 答题入口统一拦截：未激活则弹出激活弹窗，并记住待执行动作
+function _licEnsure(actionFn){
+  if(_licStatus().active) return true;
+  showLicSheet(actionFn);
+  return false;
+}
+function _licDoActivate(inputId){
+  const input = document.getElementById(inputId);
+  if(!input) return false;
+  const errEl = document.getElementById(inputId === 'licKeyInput' ? 'licErrMsg' : 'licErrMsgSheet');
+  const key = (input.value || '').trim();
+  if(!key){ if(errEl) errEl.textContent = '请输入授权密钥'; return false; }
+  const res = _licVerify(key, _licMachineCode());
+  if(res.valid){
+    localStorage.setItem(_LIC_STORE, key);
+    hideLicSheet();
+    _renderLicSection();
+    toast('激活成功，欢迎使用');
+    // 激活成功后自动继续刚才被拦截的答题动作
+    if(typeof _licPending === 'function'){
+      const fn = _licPending;
+      _licPending = null;
+      setTimeout(fn, 350);
+    }
+    return true;
+  }
+  if(errEl) errEl.textContent = res.reason;
+  return false;
+}
+function _licActivateFromGate(){ _licDoActivate('licKeyInput'); }
+// 设置面板激活状态区渲染
+function _renderLicSection(){
+  const box = document.getElementById('licSection');
+  if(!box) return;
+  const st = _licStatus();
+  if(st.active){
+    const d = new Date(st.expireTime);
+    const dateStr = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    box.innerHTML = '<div class="rounded-2xl bg-primary-50 dark:bg-primary-900/30 border-2 border-primary-200 dark:border-purple-800/50 p-4">'
+      + '<div class="flex items-center justify-between">'
+      + '<p class="text-sm font-bold text-gray-700 dark:text-gray-200">🔑 激活状态</p>'
+      + '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold text-white" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6)">已激活</span>'
+      + '</div>'
+      + '<p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">有效期至 ' + dateStr + ' · 密钥已绑定本机</p>'
+      + '</div>';
+  } else {
+    box.innerHTML = '<div class="rounded-2xl bg-primary-50 dark:bg-primary-900/30 border-2 border-primary-200 dark:border-purple-800/50 p-4">'
+      + '<div class="flex items-center justify-between">'
+      + '<p class="text-sm font-bold text-gray-700 dark:text-gray-200">🔑 激活状态</p>'
+      + '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300">未激活</span>'
+      + '</div>'
+      + (st.reason ? '<p class="mt-1.5 text-xs text-red-500">' + st.reason + '</p>' : '')
+      + '<input id="licKeyInputSheet" type="text" placeholder="请输入授权密钥" class="mt-2.5 w-full rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 text-sm text-gray-800 dark:text-gray-100 outline-none focus:border-purple-400 transition-colors">'
+      + '<p id="licErrMsgSheet" class="mt-1.5 text-xs text-red-500 min-h-[14px]"></p>'
+      + '<button onclick="_licDoActivate(\'licKeyInputSheet\')" class="w-full py-2.5 rounded-xl text-white text-sm font-bold active:scale-[0.97] transition-transform" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6)">激活</button>'
+      + '</div>';
+  }
+}
+function initLicense(){
+  const mcEl = document.getElementById('licMachineCode');
+  if(mcEl) mcEl.textContent = _licMachineCode();
+  _renderLicSection();
+}
+
+/* =========================================================
    启动
    ========================================================= */
 function initSafeArea(){
@@ -26716,6 +27001,7 @@ initSafeArea();
 initTheme();
 initStore();
 renderHome();
+initLicense();
 
 
 /* =========================================================

@@ -42,10 +42,10 @@ tailwind.config = {
   body { overflow-x: hidden; }
   .glass { background: rgba(255,255,255,0.7); backdrop-filter: blur(12.6px); -webkit-backdrop-filter: blur(12.6px); }
   .dark .glass { background: rgba(30,27,75,0.55); }
-  .bg-app { background: linear-gradient(160deg, #f5f3ff 0%, #e9e4ff 40%, #f0ebff 100%); }
+  .bg-app { background: #f5f8ff; }
   .dark .bg-app { background: linear-gradient(160deg, #1a1440 0%, #1e1b4b 40%, #261f55 100%); }
   .hero-gradient { background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 50%, #c4b5fd 100%); }
-  .card-grad { background: linear-gradient(145deg, #ffffff 0%, #faf8ff 100%); box-shadow: 0 8px 32px -8px rgba(139,92,246,0.25); }
+  .card-grad { background: #ffffff; box-shadow: 0 8px 32px -8px rgba(139,92,246,0.25); }
   .dark .card-grad { background: linear-gradient(145deg, #2d2660 0%, #261f55 100%); box-shadow: 0 8px 32px -8px rgba(0,0,0,0.5); }
   .btn-purple { background: linear-gradient(135deg, #7c3aed, #8b5cf6); box-shadow: 0 6px 20px -6px rgba(124,58,237,0.55); }
   .btn-purple:hover { background: linear-gradient(135deg, #6d28d9, #7c3aed); transform: translateY(-1px); }
@@ -155,7 +155,7 @@ tailwind.config = {
   .nav-mock .nav-lbl { color: #7c3aed; font-weight: 700; }
   .dark .nav-mock .nav-lbl { color: #c4b5fd; }
   /* ============ 功能卡片（图标居中简约风格） ============ */
-  .f-card { background: linear-gradient(150deg, #ffffff 0%, #f6f2ff 100%); border-radius: 24px; padding: 18px 16px 16px; box-shadow: 0 6px 18px -8px rgba(124,58,237,0.22); cursor: pointer; text-align: left; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+  .f-card { background: #ffffff; border-radius: 24px; padding: 18px 16px 16px; box-shadow: 0 6px 18px -8px rgba(124,58,237,0.22); cursor: pointer; text-align: left; transition: transform 0.2s ease, box-shadow 0.2s ease; }
   .f-card:active { transform: scale(0.96); }
   .dark .f-card { background: linear-gradient(150deg, #2d2660 0%, #261f55 100%); box-shadow: 0 6px 18px -8px rgba(0,0,0,0.45); }
   .f-ic { width: 74px; height: 74px; margin: 0 0 12px; object-fit: contain; display: block; filter: drop-shadow(0 10px 16px rgba(139,92,246,0.38)); }
@@ -25604,6 +25604,7 @@ function startMode(mode){
   }
   let list = buildList(mode);
   if(!list.length){ toast(mode==='mistakes' ? '暂无错题，继续保持！' : '没有可刷的题目'); return; }
+  _quizLive = true;
   STATE.quiz = DEFAULT_STATE().quiz;
   STATE.quiz.mode = mode;
   _quizReturnPage = _activePageId();
@@ -26450,6 +26451,7 @@ function startFromMistake(qid){
   const pos = all.findIndex(q=>q.id===qid);
   const list = pos>=0 ? all.slice(pos).concat(all.slice(0,pos)) : all;
   _quizReturnPage = _activePageId();
+  _quizLive = true;
   STATE.quiz = DEFAULT_STATE().quiz;
   STATE.quiz.mode = 'mistakes';
   STATE.quiz.list = list;
@@ -26515,6 +26517,7 @@ function reviewMock(){
   if(!STATE.quiz.mockWrong.length){ toast('🎉 本次模考全部正确'); showPage('page-home'); return; }
   const s = STATE.current_subject;
   const wrongList = STATE.quiz.mockWrong.map(w => STATE.quiz.list[w.qidx]).filter(Boolean);
+  _quizLive = true;
   STATE.quiz = DEFAULT_STATE().quiz;
   STATE.quiz.mode = 'mistakes';
   STATE.quiz.list = wrongList;
